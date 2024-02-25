@@ -42,18 +42,28 @@ export const Table = () => {
   const supabase = createClient();
 
   const [purchasers, setPurchasers] = useState<
-    Database["public"]["Tables"]["purchasers"]["Row"][] | null
+    | {
+        data: Database["public"]["Tables"]["purchasers"]["Row"];
+        isEditMode: boolean;
+      }[]
+    | null
   >([]);
+  const [editingPurchaserName, setEditingPurchaserName] = useState<
+    string | null
+  >(null);
 
   const readPurchaser = async () => {
     let { data: purchasers, error } = await supabase
       .from("purchasers")
-      .select("*");
+      .select("*")
+      .order("created_at", { ascending: true });
     if (error) {
       console.error(error);
       return;
     }
-    setPurchasers(purchasers);
+    setPurchasers(
+      purchasers?.map((x) => ({ data: x, isEditMode: false })) ?? null
+    );
   };
 
   const deletePurchaser = async (purchaserId: number) => {
@@ -62,6 +72,22 @@ export const Table = () => {
       .delete()
       .eq("id", purchaserId);
     if (error) console.error(error);
+    readPurchaser();
+  };
+
+  const updatePurchaser = async (
+    purchaserId: number,
+    newPurchaserName: string
+  ) => {
+    const { error } = await supabase
+      .from("purchasers")
+      .update({ name: newPurchaserName })
+      .eq("id", purchaserId)
+      .select();
+    if (error) {
+      console.error(error);
+      return;
+    }
     readPurchaser();
   };
 
@@ -82,18 +108,57 @@ export const Table = () => {
         </thead>
         <tbody>
           {purchasers?.map((x) => (
-            <tr key={x.id}>
-              <td>{x.name}</td>
+            <tr key={x.data.id}>
+              <td>
+                {x.isEditMode ? (
+                  <input
+                    className="text-black"
+                    onChange={(e) => {
+                      setEditingPurchaserName(e.target.value);
+                    }}
+                    value={editingPurchaserName ?? ""}
+                  />
+                ) : (
+                  <span>{x.data.name}</span>
+                )}
+              </td>
               <td>
                 <button
                   onClick={() => {
-                    deletePurchaser(x.id);
+                    deletePurchaser(x.data.id);
                   }}
                 >
                   削除
                 </button>
               </td>
-              <td>編集ボタン</td>
+              <td>
+                {x.isEditMode ? (
+                  <button
+                    onClick={() => {
+                      if (editingPurchaserName)
+                        updatePurchaser(x.data.id, editingPurchaserName);
+                    }}
+                  >
+                    確定
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setEditingPurchaserName(x.data.name);
+                      setPurchasers(
+                        (prev) =>
+                          prev?.map((y) =>
+                            y.data.id === x.data.id
+                              ? { ...y, isEditMode: true }
+                              : y
+                          ) ?? null
+                      );
+                    }}
+                  >
+                    編集
+                  </button>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
