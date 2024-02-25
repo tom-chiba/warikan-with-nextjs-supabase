@@ -56,6 +56,15 @@ export const Table = () => {
     setPurchasers(purchasers);
   };
 
+  const deletePurchaser = async (purchaserId: number) => {
+    const { error } = await supabase
+      .from("purchasers")
+      .delete()
+      .eq("id", purchaserId);
+    if (error) console.error(error);
+    readPurchaser();
+  };
+
   useEffect(() => {
     readPurchaser();
   }, []);
@@ -75,7 +84,15 @@ export const Table = () => {
           {purchasers?.map((x) => (
             <tr key={x.id}>
               <td>{x.name}</td>
-              <td>削除ボタン</td>
+              <td>
+                <button
+                  onClick={() => {
+                    deletePurchaser(x.id);
+                  }}
+                >
+                  削除
+                </button>
+              </td>
               <td>編集ボタン</td>
             </tr>
           ))}
