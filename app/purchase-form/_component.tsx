@@ -1,24 +1,26 @@
 "use client";
 
-import { Fragment, useEffect, useId } from "react";
+import { Database } from "@/database.types";
+import { createClient } from "@/utils/supabase/client";
+import { Fragment, useEffect, useId, useState } from "react";
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
-
-const dummyPeople = [
-  { id: 0, name: "太郎" },
-  { id: 1, name: "次郎" },
-  { id: 2, name: "三郎" },
-];
 
 type FormItem = {
   title: string;
   date: string;
   note: string;
-  paidList: ((typeof dummyPeople)[number] & { amount: number })[];
-  toPayList: ((typeof dummyPeople)[number] & { amount: number })[];
+  paidList: (Database["public"]["Tables"]["purchasers"]["Row"] & {
+    amount: number;
+  })[];
+  toPayList: (Database["public"]["Tables"]["purchasers"]["Row"] & {
+    amount: number;
+  })[];
 };
 
 export const Form = () => {
   const componentId = useId();
+
+  const supabase = createClient();
 
   const { control, register, handleSubmit } = useForm<FormItem>();
   const {
@@ -38,19 +40,41 @@ export const Form = () => {
     name: "toPayList",
   });
 
+  const [purchasers, setPurchasers] = useState<
+    Database["public"]["Tables"]["purchasers"]["Row"][] | null
+  >(null);
+
+  const readPurchaser = async () => {
+    let { data, error } = await supabase
+      .from("purchasers")
+      .select("*")
+      .order("created_at", { ascending: true });
+    if (error) {
+      console.error(error);
+      return;
+    }
+    setPurchasers(data);
+  };
+
   const onSubmit: SubmitHandler<FormItem> = (e) => console.dir(e);
 
   useEffect(() => {
-    dummyPeople.forEach((x) => {
+    readPurchaser();
+  }, []);
+
+  useEffect(() => {
+    if (!purchasers) return;
+
+    purchasers.forEach((x) => {
       paidListAppend({ ...x, amount: 0 });
       toPayListAppend({ ...x, amount: 0 });
     });
 
     return () => {
-      paidListRemove(dummyPeople.map((_, i) => i));
-      toPayListRemove(dummyPeople.map((_, i) => i));
+      paidListRemove(purchasers.map((_, i) => i));
+      toPayListRemove(purchasers.map((_, i) => i));
     };
-  }, [dummyPeople]);
+  }, [purchasers]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
