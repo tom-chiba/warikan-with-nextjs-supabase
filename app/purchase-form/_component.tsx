@@ -14,10 +14,10 @@ type toZod<T extends Record<string, any>> = {
 type FormItems = {
   title: string;
   date: string;
-  note: string;
+  note?: string;
   purchasers: (Database["public"]["Tables"]["purchasers"]["Row"] & {
-    amountPaid: number | null;
-    amountToPay: number | null;
+    amountPaid?: number;
+    amountToPay?: number;
   })[];
 };
 
@@ -29,7 +29,7 @@ export const Form = () => {
   const zodSchema = z.object<toZod<FormItems>>({
     title: z.string().min(1, { message: "必須" }),
     date: z.string(),
-    note: z.string(),
+    note: z.string().optional(),
     purchasers: z.array(
       z.object({
         created_at: z.string(),
@@ -37,15 +37,23 @@ export const Form = () => {
         name: z.string(),
         user_id: z.string(),
         amountPaid: z
-          .number()
-          .nonnegative({ message: "0以上の値じゃないとダメ" })
-          .int({ message: "正数じゃないとダメ" })
-          .nullable(),
+          .union([
+            z
+              .number()
+              .nonnegative({ message: "0以上の値じゃないとダメ" })
+              .int({ message: "正数じゃないとダメ" }),
+            z.nan(),
+          ])
+          .optional(),
         amountToPay: z
-          .number()
-          .nonnegative({ message: "0以上の値じゃないとダメ" })
-          .int({ message: "正数じゃないとダメ" })
-          .nullable(),
+          .union([
+            z
+              .number()
+              .nonnegative({ message: "0以上の値じゃないとダメ" })
+              .int({ message: "正数じゃないとダメ" }),
+            z.nan(),
+          ])
+          .optional(),
       })
     ),
   });
@@ -90,17 +98,17 @@ export const Form = () => {
     purchasers,
   }: {
     title: string;
-    date?: string;
+    date: string;
     note?: string;
     purchasers: {
       id: number;
-      amountPaid: number | null;
-      amountToPay: number | null;
+      amountPaid?: number;
+      amountToPay?: number;
     }[];
   }) => {
     const { data: purchaseData, error: purchaseError } = await supabase
       .from("purchases")
-      .insert([{ title, purchase_date: date, note }])
+      .insert([{ title, purchase_date: date || null, note }])
       .select();
     if (purchaseError) {
       console.error(purchaseError);
@@ -155,7 +163,7 @@ export const Form = () => {
     if (!purchasers) return;
 
     purchasers.forEach((x) => {
-      purchasersAppend({ ...x, amountPaid: null, amountToPay: null });
+      purchasersAppend({ ...x, amountPaid: undefined, amountToPay: undefined });
     });
 
     return () => {
