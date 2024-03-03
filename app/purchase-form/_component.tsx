@@ -4,16 +4,22 @@ import { Database } from "@/database.types";
 import { createClient } from "@/utils/supabase/client";
 import { Fragment, useEffect, useId, useState } from "react";
 import { useForm, SubmitHandler, useFieldArray } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-type FormItem = {
+type toZod<T extends Record<string, any>> = {
+  [K in keyof T]-?: z.ZodType<T[K]>;
+};
+
+type FormItems = {
   title: string;
   date: string;
   note: string;
   paidList: (Database["public"]["Tables"]["purchasers"]["Row"] & {
-    amount: number;
+    amount: number | null;
   })[];
   toPayList: (Database["public"]["Tables"]["purchasers"]["Row"] & {
-    amount: number;
+    amount: number | null;
   })[];
 };
 
@@ -22,7 +28,46 @@ export const Form = () => {
 
   const supabase = createClient();
 
-  const { control, register, handleSubmit } = useForm<FormItem>();
+  const zodSchema = z.object<toZod<FormItems>>({
+    title: z.string().min(1, { message: "必須" }),
+    date: z.string(),
+    note: z.string(),
+    paidList: z.array(
+      z.object({
+        created_at: z.string(),
+        id: z.number(),
+        name: z.string(),
+        user_id: z.string(),
+        amount: z
+          .number()
+          .nonnegative({ message: "0以上の値じゃないとダメ" })
+          .int({ message: "正数じゃないとダメ" })
+          .nullable(),
+      })
+    ),
+    toPayList: z.array(
+      z.object({
+        created_at: z.string(),
+        id: z.number(),
+        name: z.string(),
+        user_id: z.string(),
+        amount: z
+          .number()
+          .nonnegative({ message: "0以上の値じゃないとダメ" })
+          .int({ message: "正数じゃないとダメ" })
+          .nullable(),
+      })
+    ),
+  });
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    formState: { errors: formStateErrors },
+  } = useForm<FormItems>({
+    resolver: zodResolver(zodSchema),
+  });
   const {
     fields: paidListFields,
     append: paidListAppend,
@@ -56,7 +101,7 @@ export const Form = () => {
     setPurchasers(data);
   };
 
-  const onSubmit: SubmitHandler<FormItem> = (e) => console.dir(e);
+  const onSubmit: SubmitHandler<FormItems> = (e) => console.dir(e);
 
   useEffect(() => {
     readPurchaser();
@@ -66,8 +111,8 @@ export const Form = () => {
     if (!purchasers) return;
 
     purchasers.forEach((x) => {
-      paidListAppend({ ...x, amount: 0 });
-      toPayListAppend({ ...x, amount: 0 });
+      paidListAppend({ ...x, amount: null });
+      toPayListAppend({ ...x, amount: null });
     });
 
     return () => {
@@ -85,6 +130,9 @@ export const Form = () => {
           className="text-black"
           {...register("title")}
         />
+        {formStateErrors.title?.message && (
+          <p className="text-white">{formStateErrors.title?.message}</p>
+        )}
       </div>
       <div>
         <label htmlFor={`${componentId}-date`}>購入日</label>
@@ -113,8 +161,13 @@ export const Form = () => {
                 key={field.id}
                 id={field.id}
                 className="text-black"
-                {...register(`paidList.${index}.amount`)}
+                {...register(`paidList.${index}.amount`, {
+                  valueAsNumber: true,
+                })}
               />
+              {formStateErrors.paidList?.[index]?.amount?.message && (
+                <p>{formStateErrors.paidList?.[index]?.amount?.message}</p>
+              )}
             </Fragment>
           ))}
         </div>
@@ -129,8 +182,13 @@ export const Form = () => {
                 key={field.id}
                 id={field.id}
                 className="text-black"
-                {...register(`toPayList.${index}.amount`)}
+                {...register(`toPayList.${index}.amount`, {
+                  valueAsNumber: true,
+                })}
               />
+              {formStateErrors.toPayList?.[index]?.amount?.message && (
+                <p>{formStateErrors.toPayList?.[index]?.amount?.message}</p>
+              )}
             </Fragment>
           ))}
         </div>
