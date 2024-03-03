@@ -15,11 +15,9 @@ type FormItems = {
   title: string;
   date: string;
   note: string;
-  paidList: (Database["public"]["Tables"]["purchasers"]["Row"] & {
-    amount: number | null;
-  })[];
-  toPayList: (Database["public"]["Tables"]["purchasers"]["Row"] & {
-    amount: number | null;
+  purchasers: (Database["public"]["Tables"]["purchasers"]["Row"] & {
+    amountPaid: number | null;
+    amountToPay: number | null;
   })[];
 };
 
@@ -32,26 +30,18 @@ export const Form = () => {
     title: z.string().min(1, { message: "必須" }),
     date: z.string(),
     note: z.string(),
-    paidList: z.array(
+    purchasers: z.array(
       z.object({
         created_at: z.string(),
         id: z.number(),
         name: z.string(),
         user_id: z.string(),
-        amount: z
+        amountPaid: z
           .number()
           .nonnegative({ message: "0以上の値じゃないとダメ" })
           .int({ message: "正数じゃないとダメ" })
           .nullable(),
-      })
-    ),
-    toPayList: z.array(
-      z.object({
-        created_at: z.string(),
-        id: z.number(),
-        name: z.string(),
-        user_id: z.string(),
-        amount: z
+        amountToPay: z
           .number()
           .nonnegative({ message: "0以上の値じゃないとダメ" })
           .int({ message: "正数じゃないとダメ" })
@@ -69,20 +59,12 @@ export const Form = () => {
     resolver: zodResolver(zodSchema),
   });
   const {
-    fields: paidListFields,
-    append: paidListAppend,
-    remove: paidListRemove,
+    fields: purchasersFields,
+    append: purchasersAppend,
+    remove: purchasersRemove,
   } = useFieldArray({
     control,
-    name: "paidList",
-  });
-  const {
-    fields: toPayListFields,
-    append: toPayListAppend,
-    remove: toPayListRemove,
-  } = useFieldArray({
-    control,
-    name: "toPayList",
+    name: "purchasers",
   });
 
   const [purchasers, setPurchasers] = useState<
@@ -111,13 +93,11 @@ export const Form = () => {
     if (!purchasers) return;
 
     purchasers.forEach((x) => {
-      paidListAppend({ ...x, amount: null });
-      toPayListAppend({ ...x, amount: null });
+      purchasersAppend({ ...x, amountPaid: null, amountToPay: null });
     });
 
     return () => {
-      paidListRemove(purchasers.map((_, i) => i));
-      toPayListRemove(purchasers.map((_, i) => i));
+      purchasersRemove(purchasers.map((_, i) => i));
     };
   }, [purchasers]);
 
@@ -154,19 +134,21 @@ export const Form = () => {
       <div>
         <span>支払額</span>
         <div>
-          {paidListFields.map((field, index) => (
+          {purchasersFields.map((field, index) => (
             <Fragment key={field.id}>
               <label htmlFor={field.id}>{field.name}</label>
               <input
                 key={field.id}
                 id={field.id}
                 className="text-black"
-                {...register(`paidList.${index}.amount`, {
+                {...register(`purchasers.${index}.amountPaid`, {
                   valueAsNumber: true,
                 })}
               />
-              {formStateErrors.paidList?.[index]?.amount?.message && (
-                <p>{formStateErrors.paidList?.[index]?.amount?.message}</p>
+              {formStateErrors.purchasers?.[index]?.amountPaid?.message && (
+                <p>
+                  {formStateErrors.purchasers?.[index]?.amountPaid?.message}
+                </p>
               )}
             </Fragment>
           ))}
@@ -175,19 +157,21 @@ export const Form = () => {
       <div>
         <span>割勘金額</span>
         <div>
-          {toPayListFields.map((field, index) => (
+          {purchasersFields.map((field, index) => (
             <Fragment key={field.id}>
               <label htmlFor={field.id}>{field.name}</label>
               <input
                 key={field.id}
                 id={field.id}
                 className="text-black"
-                {...register(`toPayList.${index}.amount`, {
+                {...register(`purchasers.${index}.amountToPay`, {
                   valueAsNumber: true,
                 })}
               />
-              {formStateErrors.toPayList?.[index]?.amount?.message && (
-                <p>{formStateErrors.toPayList?.[index]?.amount?.message}</p>
+              {formStateErrors.purchasers?.[index]?.amountToPay?.message && (
+                <p>
+                  {formStateErrors.purchasers?.[index]?.amountToPay?.message}
+                </p>
               )}
             </Fragment>
           ))}
