@@ -10,6 +10,9 @@ export default function Index() {
       <div>
         <Link href="/purchase-form">購入品入力ページへ</Link>
       </div>
+      <div>
+        <Link href="/unsettled">未精算リストページへ</Link>
+      </div>
     </div>
   );
 }
