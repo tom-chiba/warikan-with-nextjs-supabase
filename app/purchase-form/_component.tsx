@@ -83,7 +83,69 @@ export const Form = () => {
     setPurchasers(data);
   };
 
-  const onSubmit: SubmitHandler<FormItems> = (e) => console.dir(e);
+  const insertPurchase = async ({
+    title,
+    date,
+    note,
+    purchasers,
+  }: {
+    title: string;
+    date?: string;
+    note?: string;
+    purchasers: {
+      id: number;
+      amountPaid: number | null;
+      amountToPay: number | null;
+    }[];
+  }) => {
+    const { data: purchaseData, error: purchaseError } = await supabase
+      .from("purchases")
+      .insert([{ title, purchase_date: date, note }])
+      .select();
+    if (purchaseError) {
+      console.error(purchaseError);
+      return;
+    }
+    const insertedPurchaseData = purchaseData[0];
+    if (!insertedPurchaseData) {
+      console.error("Inserted purchase data doesn't exist.");
+      return;
+    }
+
+    purchasers.forEach((x) => {
+      supabase
+        .from("purchasers_purchases")
+        .insert([
+          {
+            purchase_id: insertedPurchaseData.id,
+            purchaser_id: x.id,
+            amount_paid: x.amountPaid ?? undefined,
+            amount_to_pay: x.amountToPay ?? undefined,
+          },
+        ])
+        .select()
+        .then(({ error }) => {
+          // TODO: トランザクション処理
+          if (error)
+            alert(
+              `処理に失敗しました。purchases tableからid=${insertedPurchaseData.id}に紐づく行を削除してください。`
+            );
+        });
+    });
+  };
+
+  const onSubmit: SubmitHandler<FormItems> = (e) => {
+    insertPurchase({
+      title: e.title,
+      date: e.date,
+      note: e.note,
+      purchasers: e.purchasers.map((x) => ({
+        id: x.id,
+        amountPaid: x.amountPaid,
+        amountToPay: x.amountToPay,
+      })),
+    });
+  };
 
   useEffect(() => {
     readPurchaser();
