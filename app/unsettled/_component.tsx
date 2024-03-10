@@ -56,6 +56,16 @@ export const Table = () => {
     readPurchases();
   };
 
+  const settlePurchase = async (purchaseId: number) => {
+    const { error } = await supabase
+      .from("purchases")
+      .update({ is_settled: true })
+      .eq("id", purchaseId)
+      .select();
+    if (error) console.error(error);
+    readPurchases();
+  };
+
   useEffect(() => {
     readPurchases();
   }, []);
@@ -69,6 +79,7 @@ export const Table = () => {
             <th>購入品名</th>
             <th>購入日</th>
             <th>合計金額</th>
+            <th>精算</th>
             <th>削除</th>
           </tr>
         </thead>
@@ -78,6 +89,15 @@ export const Table = () => {
               <td>{x.title}</td>
               <td>{x.date}</td>
               <td>{x.totalAmount}</td>
+              <td>
+                <button
+                  onClick={() => {
+                    settlePurchase(x.id);
+                  }}
+                >
+                  精算
+                </button>
+              </td>
               <td>
                 <button
                   onClick={() => {
