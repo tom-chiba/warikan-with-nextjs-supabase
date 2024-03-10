@@ -41,7 +41,7 @@ export const Table = () => {
         title: x.title,
         date: x.purchase_date ?? undefined,
         totalAmount: x.purchasers_purchases.reduce(
-          (previous, current) => previous + current.amount_paid,
+          (previous, current) => previous + (current.amount_paid ?? 0),
           0
         ),
       }))
