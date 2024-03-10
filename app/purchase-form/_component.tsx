@@ -127,8 +127,8 @@ export const Form = () => {
           {
             purchase_id: insertedPurchaseData.id,
             purchaser_id: x.id,
-            amount_paid: x.amountPaid ?? undefined,
-            amount_to_pay: x.amountToPay ?? undefined,
+            amount_paid: x.amountPaid ?? null,
+            amount_to_pay: x.amountToPay ?? null,
           },
         ])
         .select()
