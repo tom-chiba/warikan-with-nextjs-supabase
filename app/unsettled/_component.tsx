@@ -47,7 +47,7 @@ export const Table = () => {
     );
   };
 
-  const deletePurchaser = async (purchaseId: number) => {
+  const deletePurchase = async (purchaseId: number) => {
     const { error } = await supabase
       .from("purchases")
       .delete()
@@ -101,7 +101,7 @@ export const Table = () => {
               <td>
                 <button
                   onClick={() => {
-                    deletePurchaser(x.id);
+                    deletePurchase(x.id);
                   }}
                 >
                   削除
