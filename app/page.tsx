@@ -13,6 +13,9 @@ export default function Index() {
       <div>
         <Link href="/unsettled">未精算リストページへ</Link>
       </div>
+      <div>
+        <Link href="/settled">精算済リストページへ</Link>
+      </div>
     </div>
   );
 }
