@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect } from "react";
 import styles from "./index.module.css";
 
@@ -26,7 +24,9 @@ const Loader = ({ isLoading }: Props) => {
         "fixed top-0 left-0 flex justify-center items-center w-full h-full bg-white bg-opacity-50"
       }
     >
-      <div className={`${styles.loader} w-12 p-2 aspect-square rounded-full bg-green-700`} />
+      <div
+        className={`${styles.loader} w-12 p-2 aspect-square rounded-full bg-green-700`}
+      />
     </div>
   );
 };
