@@ -1,5 +1,6 @@
 "use client";
 
+import Input from "@/components/clients/Input";
 import type { Database } from "@/database.types";
 import { createClient } from "@/utils/supabase/client";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -175,31 +176,18 @@ export const Form = () => {
 		<form onSubmit={handleSubmit(onSubmit)}>
 			<div>
 				<label htmlFor={`${componentId}-title`}>購入品名</label>
-				<input
-					id={`${componentId}-title`}
-					className="text-black"
-					{...register("title")}
-				/>
+				<Input id={`${componentId}-title`} {...register("title")} />
 				{formStateErrors.title?.message && (
 					<p className="text-white">{formStateErrors.title?.message}</p>
 				)}
 			</div>
 			<div>
 				<label htmlFor={`${componentId}-date`}>購入日</label>
-				<input
-					id={`${componentId}-date`}
-					type="date"
-					className="text-black"
-					{...register("date")}
-				/>
+				<Input id={`${componentId}-date`} type="date" {...register("date")} />
 			</div>
 			<div>
 				<label htmlFor={`${componentId}-note`}>メモ</label>
-				<input
-					id={`${componentId}-note`}
-					className="text-black"
-					{...register("note")}
-				/>
+				<Input id={`${componentId}-note`} {...register("note")} />
 			</div>
 			<div>
 				<span>支払額</span>
@@ -207,10 +195,9 @@ export const Form = () => {
 					{purchasersFields.map((field, index) => (
 						<Fragment key={field.id}>
 							<label htmlFor={field.id}>{field.name}</label>
-							<input
+							<Input
 								key={field.id}
 								id={field.id}
-								className="text-black"
 								{...register(`purchasers.${index}.amountPaid`, {
 									valueAsNumber: true,
 								})}
@@ -230,10 +217,9 @@ export const Form = () => {
 					{purchasersFields.map((field, index) => (
 						<Fragment key={field.id}>
 							<label htmlFor={field.id}>{field.name}</label>
-							<input
+							<Input
 								key={field.id}
 								id={field.id}
-								className="text-black"
 								{...register(`purchasers.${index}.amountToPay`, {
 									valueAsNumber: true,
 								})}
