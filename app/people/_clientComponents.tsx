@@ -3,34 +3,23 @@
 import type { Database } from "@/database.types";
 import { createClient } from "@/utils/supabase/client";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useFormState } from "react-dom";
+import { createPurchaser } from "./_serverActions";
 
 export const Form = () => {
 	const componentId = useId();
-	const purchaserNameRef = useRef<HTMLInputElement>(null);
 
-	const supabase = createClient();
-
-	const createPurchaser = async () => {
-		const { error } = await supabase
-			.from("purchasers")
-			.insert([{ name: purchaserNameRef.current?.value ?? "" }])
-			.select();
-		if (error) {
-			console.error(error);
-		}
-	};
+	const [state, formAction] = useFormState<string | undefined, FormData>(
+		createPurchaser,
+		undefined,
+	);
 
 	return (
-		<form
-			action={() => {
-				createPurchaser();
-			}}
-		>
+		<form action={formAction}>
 			<label htmlFor={`${componentId}-purchaserName`}>追加する購入者名</label>
 			<input
-				ref={purchaserNameRef}
 				id={`${componentId}-purchaserName`}
-				type="text"
+				name="name"
 				className="text-black"
 			/>
 			<button type="submit">追加</button>
@@ -39,6 +28,8 @@ export const Form = () => {
 };
 
 export const Table = () => {
+	"use client";
+
 	const supabase = createClient();
 
 	const [purchasers, setPurchasers] = useState<

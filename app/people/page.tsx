@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Form, Table } from "./_components";
+import { Form, Table } from "./_clientComponents";
 
 export default function People() {
 	return (
