@@ -2,34 +2,43 @@
 
 import type { Database } from "@/database.types";
 import { createClient } from "@/utils/supabase/client";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useForm } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod";
+import { useCallback, useEffect, useId, useState } from "react";
 import { useFormState } from "react-dom";
+import { purchaserSchema } from "./_components";
 import { createPurchaser } from "./_serverActions";
 
 export const Form = () => {
-	const componentId = useId();
+	const [lastResult, action] = useFormState(createPurchaser, undefined);
+	const [form, fields] = useForm({
+		// Sync the result of last submission
+		lastResult,
 
-	const [state, formAction] = useFormState<string | undefined, FormData>(
-		createPurchaser,
-		undefined,
-	);
+		// Reuse the validation logic on the client
+		onValidate({ formData }) {
+			return parseWithZod(formData, { schema: purchaserSchema });
+		},
+
+		// Validate the form on blur event triggered
+		shouldValidate: "onBlur",
+	});
 
 	return (
-		<form action={formAction}>
-			<label htmlFor={`${componentId}-purchaserName`}>追加する購入者名</label>
+		<form id={form.id} onSubmit={form.onSubmit} action={action} noValidate>
+			<label htmlFor={fields.name.id}>追加する購入者名</label>
 			<input
-				id={`${componentId}-purchaserName`}
-				name="name"
+				id={fields.name.id}
+				name={fields.name.name}
 				className="text-black"
 			/>
+			<div>{fields.name.errors}</div>
 			<button type="submit">追加</button>
 		</form>
 	);
 };
 
 export const Table = () => {
-	"use client";
-
 	const supabase = createClient();
 
 	const [purchasers, setPurchasers] = useState<

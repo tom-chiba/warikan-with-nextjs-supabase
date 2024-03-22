@@ -7,6 +7,8 @@
 	},
 	"dependencies": {
 		"@biomejs/biome": "^1.6.1",
+		"@conform-to/react": "^1.0.4",
+		"@conform-to/zod": "^1.0.4",
 		"@hookform/resolvers": "^3.3.4",
 		"@supabase/ssr": "latest",
 		"@supabase/supabase-js": "latest",
