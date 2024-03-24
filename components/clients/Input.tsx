@@ -1,21 +1,13 @@
-import { type ComponentProps, type ForwardedRef, forwardRef } from "react";
-import type { UseFormRegisterReturn } from "react-hook-form";
+import type { ComponentProps } from "react";
 
-type InputProps = UseFormRegisterReturn & {
-	id?: string;
-	type?: ComponentProps<"input">["type"];
-};
+type InputProps = Pick<
+	ComponentProps<"input">,
+	"id" | "name" | "type" | "defaultValue"
+>;
 
-const Input = (
-	props: Omit<InputProps, "ref">,
-	ref: ForwardedRef<HTMLInputElement>,
-) => {
+const Input = (props: InputProps) => {
 	return (
-		<input
-			{...props}
-			ref={ref}
-			className="text-black border border-gray-300 shadow"
-		/>
+		<input {...props} className="text-black border border-gray-300 shadow" />
 	);
 };
-export default forwardRef(Input);
+export default Input;
