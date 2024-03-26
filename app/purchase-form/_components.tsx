@@ -1,4 +1,3 @@
-import type { Database } from "@/database.types";
 import { z } from "zod";
 
 type toZod<T extends Record<string, unknown>> = {
