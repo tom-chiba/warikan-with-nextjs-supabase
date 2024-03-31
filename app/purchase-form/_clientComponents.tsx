@@ -1,6 +1,6 @@
 "use client";
 
-import Input from "@/components/clients/Input";
+import Input from "@/components/Input";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { Fragment, useEffect } from "react";

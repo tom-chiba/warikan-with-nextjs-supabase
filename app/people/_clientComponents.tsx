@@ -1,6 +1,6 @@
 "use client";
 
-import Input from "@/components/clients/Input";
+import Input from "@/components/Input";
 import type { Database } from "@/database.types";
 import { createClient } from "@/utils/supabase/client";
 import { useForm } from "@conform-to/react";
