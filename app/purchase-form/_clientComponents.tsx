@@ -3,10 +3,30 @@
 import Input from "@/components/Input";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
-import { Fragment, useEffect } from "react";
+import { useEffect } from "react";
 import { useFormState } from "react-dom";
 import { purchaseSchema } from "./_components";
 import { createPurchase } from "./_serverActions";
+
+type AmountEntryFieldProps = {
+	id: string;
+	label: string;
+	inputName: string;
+};
+
+const AmountEntryField = ({ id, label, inputName }: AmountEntryFieldProps) => {
+	return (
+		<div className="flex gap-4 border-b-2 border-gray-300 p-1 overflow-auto min-w-0">
+			<label className="truncate" htmlFor={id}>
+				{label}
+			</label>
+			<div className="flex gap-1">
+				<Input id={id} name={inputName} size="small" />
+				<span>円</span>
+			</div>
+		</div>
+	);
+};
 
 type ClientFormProps = {
 	purchasers: {
@@ -43,9 +63,17 @@ export const ClientForm = ({ purchasers }: ClientFormProps) => {
 
 	return (
 		<>
-			<form id={form.id} action={action} onSubmit={form.onSubmit} noValidate>
-				<div>
-					<label htmlFor={fields.title.id}>購入品名</label>
+			<form
+				className="overflow-auto"
+				id={form.id}
+				action={action}
+				onSubmit={form.onSubmit}
+				noValidate
+			>
+				<div className="overflow-auto">
+					<label htmlFor={fields.title.id} className="overflow-auto">
+						購入品名
+					</label>
 					<Input id={fields.title.id} name={fields.title.name} />
 					<p>{fields.title.errors}</p>
 				</div>
@@ -59,23 +87,24 @@ export const ClientForm = ({ purchasers }: ClientFormProps) => {
 					<Input id={fields.note.id} name={fields.note.name} />
 					<p>{fields.note.errors}</p>
 				</div>
-				<div>
+				<div className="overflow-auto">
 					<span>支払額</span>
-					<div>
+					<div className="overflow-auto">
 						{purchasersFieldList.map((x) => {
 							const fieldSet = x.getFieldset();
 
 							return (
-								<Fragment key={fieldSet.amountPaid.key}>
-									<label htmlFor={fieldSet.amountPaid.id}>
-										{fieldSet.name.initialValue}
-									</label>
-									<Input
+								<div
+									key={fieldSet.amountPaid.key}
+									className="flex justify-end overflow-auto"
+								>
+									<AmountEntryField
 										id={fieldSet.amountPaid.id}
-										name={fieldSet.amountPaid.name}
+										label={fieldSet.name.initialValue ?? ""}
+										inputName={fieldSet.amountPaid.name}
 									/>
 									<p>{fieldSet.amountPaid.errors}</p>
-								</Fragment>
+								</div>
 							);
 						})}
 					</div>
@@ -87,16 +116,17 @@ export const ClientForm = ({ purchasers }: ClientFormProps) => {
 							const fieldSet = x.getFieldset();
 
 							return (
-								<Fragment key={fieldSet.amountToPay.key}>
-									<label htmlFor={fieldSet.amountToPay.id}>
-										{fieldSet.name.initialValue}
-									</label>
-									<Input
+								<div
+									key={fieldSet.amountToPay.key}
+									className="flex justify-end"
+								>
+									<AmountEntryField
 										id={fieldSet.amountToPay.id}
-										name={fieldSet.amountToPay.name}
+										label={fieldSet.name.initialValue ?? ""}
+										inputName={fieldSet.amountToPay.name}
 									/>
 									<p>{fieldSet.amountToPay.errors}</p>
-								</Fragment>
+								</div>
 							);
 						})}
 					</div>
