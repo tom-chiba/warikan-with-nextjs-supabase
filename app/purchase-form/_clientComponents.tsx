@@ -16,7 +16,7 @@ type AmountEntryFieldProps = {
 
 const AmountEntryField = ({ id, label, inputName }: AmountEntryFieldProps) => {
 	return (
-		<div className="flex gap-4 border-b-2 border-gray-300 p-1 overflow-auto min-w-0">
+		<div className="flex gap-4 border-b-2 border-gray-300 p-1 min-w-0">
 			<label className="truncate" htmlFor={id}>
 				{label}
 			</label>
@@ -63,17 +63,9 @@ export const ClientForm = ({ purchasers }: ClientFormProps) => {
 
 	return (
 		<>
-			<form
-				className="overflow-auto"
-				id={form.id}
-				action={action}
-				onSubmit={form.onSubmit}
-				noValidate
-			>
-				<div className="overflow-auto">
-					<label htmlFor={fields.title.id} className="overflow-auto">
-						購入品名
-					</label>
+			<form id={form.id} action={action} onSubmit={form.onSubmit} noValidate>
+				<div>
+					<label htmlFor={fields.title.id}>購入品名</label>
 					<Input id={fields.title.id} name={fields.title.name} />
 					<p>{fields.title.errors}</p>
 				</div>
@@ -87,17 +79,14 @@ export const ClientForm = ({ purchasers }: ClientFormProps) => {
 					<Input id={fields.note.id} name={fields.note.name} />
 					<p>{fields.note.errors}</p>
 				</div>
-				<div className="overflow-auto">
+				<div>
 					<span>支払額</span>
-					<div className="overflow-auto">
+					<div>
 						{purchasersFieldList.map((x) => {
 							const fieldSet = x.getFieldset();
 
 							return (
-								<div
-									key={fieldSet.amountPaid.key}
-									className="flex justify-end overflow-auto"
-								>
+								<div key={fieldSet.amountPaid.key} className="flex justify-end">
 									<AmountEntryField
 										id={fieldSet.amountPaid.id}
 										label={fieldSet.name.initialValue ?? ""}

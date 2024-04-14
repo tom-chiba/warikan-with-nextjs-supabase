@@ -5,8 +5,8 @@ import { ServerForm } from "./_serverComponents";
 
 export default function PurchaseForm() {
 	return (
-		<div className="overflow-auto">
-			<h1>PurchaseForm Page</h1>
+		<div>
+			<h1>購入品入力ページ</h1>
 			<Link href="/">トップページへ</Link>
 			<TabList
 				tabItems={[

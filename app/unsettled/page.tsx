@@ -4,7 +4,7 @@ import { Table } from "./_component";
 export default function PurchaseForm() {
 	return (
 		<div>
-			<h1>Unsettled Page</h1>
+			<h1>未精算リストページ</h1>
 			<Link href="/">トップページへ</Link>
 			<Table />
 		</div>

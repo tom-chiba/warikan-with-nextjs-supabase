@@ -4,7 +4,7 @@ import { Form, Table } from "./_clientComponents";
 export default function People() {
 	return (
 		<div>
-			<h1>People Page</h1>
+			<h1>購入者ページ</h1>
 			<Link href="/">トップページへ</Link>
 			<Form />
 			<Table />

@@ -19,8 +19,8 @@ export default function RootLayout({
 }) {
 	return (
 		<html lang="en" className={GeistSans.className}>
-			<body className="bg-background text-foreground">
-				<main className="w-dvw overflow-auto p-4">
+			<body className="bg-background text-foreground flex justify-center">
+				<main className="w-dvw max-w-screen-md p-4">
 					<AuthButton />
 					{children}
 				</main>
