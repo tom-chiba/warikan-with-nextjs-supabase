@@ -3,7 +3,7 @@
 import Input from "@/components/Input";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormState } from "react-dom";
 import { purchaseSchema } from "./_components";
 import { createPurchase } from "./_serverActions";
@@ -28,6 +28,61 @@ const AmountEntryField = ({ id, label, inputName }: AmountEntryFieldProps) => {
 	);
 };
 
+type PurchasersDialogProps = {
+	purchasers: {
+		id: number;
+		name: string;
+	}[];
+	isOpen: boolean;
+	onClose: () => void;
+};
+
+export const ClientPurchasersDialog = ({
+	purchasers,
+	isOpen,
+	onClose,
+}: PurchasersDialogProps) => {
+	const dialogRef = useRef<HTMLDialogElement>(null);
+
+	useEffect(() => {
+		if (isOpen) {
+			dialogRef.current?.showModal();
+			return;
+		}
+		dialogRef.current?.close();
+	}, [isOpen]);
+
+	return (
+		<dialog ref={dialogRef} onClose={onClose}>
+			<header className="flex gap-1">
+				<h1>メンバー管理</h1>
+				<button className="border" type="button">
+					追加
+				</button>
+				<button className="border" type="button">
+					削除
+				</button>
+			</header>
+			<div>
+				<ul>
+					{purchasers.map((purchaser) => (
+						<li key={purchaser.id}>{purchaser.name}</li>
+					))}
+				</ul>
+			</div>
+			<footer>
+				<button
+					className="border"
+					type="button"
+					onClick={() => dialogRef.current?.close()}
+				>
+					完了
+				</button>
+			</footer>
+		</dialog>
+	);
+};
+
 type ClientFormProps = {
 	purchasers: {
 		id: number;
@@ -36,6 +91,9 @@ type ClientFormProps = {
 };
 
 export const ClientForm = ({ purchasers }: ClientFormProps) => {
+	const [clientPurchasersDialogIsOpen, setClientPurchasersDialogIsOpen] =
+		useState(false);
+
 	const createPurchaseWithPurchasers = createPurchase.bind(
 		null,
 		purchasers.map((x) => x.id),
@@ -79,6 +137,13 @@ export const ClientForm = ({ purchasers }: ClientFormProps) => {
 					<Input id={fields.note.id} name={fields.note.name} />
 					<p>{fields.note.errors}</p>
 				</div>
+				<button
+					className="border"
+					type="button"
+					onClick={() => setClientPurchasersDialogIsOpen(true)}
+				>
+					メンバー管理
+				</button>
 				<div>
 					<span>支払額</span>
 					<div>
@@ -121,6 +186,11 @@ export const ClientForm = ({ purchasers }: ClientFormProps) => {
 					</div>
 				</div>
 				<button type="submit">追加</button>
+				<ClientPurchasersDialog
+					isOpen={clientPurchasersDialogIsOpen}
+					onClose={() => setClientPurchasersDialogIsOpen(false)}
+					purchasers={purchasers}
+				/>
 			</form>
 		</>
 	);
