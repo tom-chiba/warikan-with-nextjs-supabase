@@ -3,6 +3,8 @@
 import Input from "@/components/Input";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
+import { mdiAccountMinus, mdiAccountPlus } from "@mdi/js";
+import Icon from "@mdi/react";
 import { useEffect, useRef, useState } from "react";
 import { useFormState } from "react-dom";
 import { purchaseSchema } from "./_components";
@@ -53,26 +55,33 @@ export const ClientPurchasersDialog = ({
 	}, [isOpen]);
 
 	return (
-		<dialog ref={dialogRef} onClose={onClose}>
-			<header className="flex gap-1">
+		<dialog className="px-4 py-2" ref={dialogRef} onClose={onClose}>
+			<header className="flex items-center justify-between gap-1 ">
 				<h1>メンバー管理</h1>
-				<button className="border" type="button">
-					追加
-				</button>
-				<button className="border" type="button">
-					削除
-				</button>
+				<div className="flex gap-1">
+					<button className="border px-1 bg-gray-200" type="button">
+						<Icon path={mdiAccountPlus} size={1} />
+					</button>
+					<button className="border px-1 bg-gray-200" type="button">
+						<Icon path={mdiAccountMinus} size={1} />
+					</button>
+				</div>
 			</header>
-			<div>
+			<div className="py-4">
 				<ul>
 					{purchasers.map((purchaser) => (
-						<li key={purchaser.id}>{purchaser.name}</li>
+						<li
+							className="border-b-2 border-gray-300 truncate py-1"
+							key={purchaser.id}
+						>
+							{purchaser.name}
+						</li>
 					))}
 				</ul>
 			</div>
-			<footer>
+			<footer className="text-center">
 				<button
-					className="border"
+					className="bg-gray-200 px-3 shadow"
 					type="button"
 					onClick={() => dialogRef.current?.close()}
 				>

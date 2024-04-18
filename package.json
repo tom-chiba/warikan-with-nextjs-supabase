@@ -10,6 +10,8 @@
 		"@conform-to/react": "^1.0.4",
 		"@conform-to/zod": "^1.0.4",
 		"@hookform/resolvers": "^3.3.4",
+		"@mdi/js": "^7.4.47",
+		"@mdi/react": "^1.6.1",
 		"@supabase/ssr": "latest",
 		"@supabase/supabase-js": "latest",
 		"autoprefixer": "10.4.17",
