@@ -3,7 +3,7 @@
 import Input from "@/components/Input";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
-import { mdiAccountMinus, mdiAccountPlus } from "@mdi/js";
+import { mdiAccountMinus, mdiAccountPlus, mdiClose } from "@mdi/js";
 import Icon from "@mdi/react";
 import { useEffect, useRef, useState } from "react";
 import { useFormState } from "react-dom";
@@ -45,6 +45,7 @@ export const ClientPurchasersDialog = ({
 	onClose,
 }: PurchasersDialogProps) => {
 	const dialogRef = useRef<HTMLDialogElement>(null);
+	const [inAddMode, setInAddMode] = useState(false);
 
 	useEffect(() => {
 		if (isOpen) {
@@ -59,7 +60,11 @@ export const ClientPurchasersDialog = ({
 			<header className="flex items-center justify-between gap-1 ">
 				<h1>メンバー管理</h1>
 				<div className="flex gap-1">
-					<button className="border px-1 bg-gray-200" type="button">
+					<button
+						className="border px-1 bg-gray-200"
+						type="button"
+						onClick={() => setInAddMode((prev) => !prev)}
+					>
 						<Icon path={mdiAccountPlus} size={1} />
 					</button>
 					<button className="border px-1 bg-gray-200" type="button">
@@ -70,13 +75,21 @@ export const ClientPurchasersDialog = ({
 			<div className="py-4">
 				<ul>
 					{purchasers.map((purchaser) => (
-						<li
-							className="border-b-2 border-gray-300 truncate py-1"
-							key={purchaser.id}
-						>
-							{purchaser.name}
+						<li className="border-b-2 border-gray-300 py-2" key={purchaser.id}>
+							<div className="truncate">{purchaser.name}</div>
 						</li>
 					))}
+					{inAddMode && (
+						<li className="border-b-2 border-gray-300 py-2">
+							<div className="bg-blue-50 flex justify-between px-1">
+								<input
+									type="text"
+									className="bg-transparent flex-1 focus-visible:outline-none"
+								/>
+								<Icon path={mdiClose} size={1} className="text-gray-400" />
+							</div>
+						</li>
+					)}
 				</ul>
 			</div>
 			<footer className="text-center">
