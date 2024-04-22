@@ -15,9 +15,7 @@ export default function PurchaseForm() {
 					{ label: "精算済リスト", href: "settled" },
 				]}
 			/>
-			<Suspense fallback={<span>loading</span>}>
-				<ServerForm />
-			</Suspense>
+			<ServerForm />
 		</div>
 	);
 }
