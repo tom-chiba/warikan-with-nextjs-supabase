@@ -39,6 +39,7 @@ type PurchasersDialogProps = {
 	isOpen: boolean;
 	onClose: () => void;
 	onCreate: () => void;
+	onDelete: () => void;
 };
 
 export const ClientPurchasersDialog = ({
@@ -46,6 +47,7 @@ export const ClientPurchasersDialog = ({
 	isOpen,
 	onClose,
 	onCreate,
+	onDelete,
 }: PurchasersDialogProps) => {
 	const supabase = createClient();
 
@@ -59,6 +61,9 @@ export const ClientPurchasersDialog = ({
 			name: string;
 		}[]
 	>([]);
+	const [purchasersIdToDelete, setPurchasersIdToDelete] = useState<
+		(number | string)[] | undefined
+	>();
 
 	const createPurchaser = async () => {
 		if (!tempPurchasers.length) return;
@@ -71,6 +76,70 @@ export const ClientPurchasersDialog = ({
 
 		onCreate();
 	};
+	const deletePurchasers = async () => {
+		if (!purchasersIdToDelete) return;
+
+		const { error } = await supabase
+			.from("purchasers")
+			.delete()
+			.in("id", purchasersIdToDelete);
+		if (error) throw new Error(error.message);
+
+		onDelete();
+	};
+
+	const renderMemberLi = (
+		purchaser:
+			| {
+					id: number;
+					name: string;
+			  }
+			| { id: string; name: string },
+	) => (
+		<li
+			className={`border-b-2 border-gray-300 py-2 flex justify-between${
+				purchasersIdToDelete?.some((x) => x === purchaser.id)
+					? " text-red-500"
+					: ""
+			}`}
+			key={purchaser.id}
+		>
+			<div className="truncate">{purchaser.name}</div>
+			{(() => {
+				if (!purchasersIdToDelete) return null;
+				if (purchasersIdToDelete.some((x) => x === purchaser.id))
+					return (
+						<button
+							type="button"
+							className="flex gap-1"
+							onClick={() =>
+								setPurchasersIdToDelete((prev) => {
+									if (!prev) throw new Error();
+									return prev.filter((x) => x !== purchaser.id);
+								})
+							}
+						>
+							<Icon path={mdiClose} size={1} />
+							キャンセル
+						</button>
+					);
+				return (
+					<button
+						type="button"
+						className="flex gap-1"
+						onClick={() =>
+							setPurchasersIdToDelete((prev) =>
+								prev ? [...prev, purchaser.id] : [purchaser.id],
+							)
+						}
+					>
+						<Icon path={mdiClose} size={1} />
+						削除
+					</button>
+				);
+			})()}
+		</li>
+	);
 
 	useEffect(() => {
 		if (isOpen) {
@@ -88,32 +157,32 @@ export const ClientPurchasersDialog = ({
 					<button
 						className="border px-1 bg-gray-200"
 						type="button"
-						onClick={() =>
+						onClick={() => {
+							setPurchasersIdToDelete(undefined);
 							setInputPurchaserName((prev) => {
 								if (prev === undefined) return "";
 								return undefined;
-							})
-						}
+							});
+						}}
 					>
 						<Icon path={mdiAccountPlus} size={1} />
 					</button>
-					<button className="border px-1 bg-gray-200" type="button">
+					<button
+						className="border px-1 bg-gray-200"
+						type="button"
+						onClick={() => {
+							setInputPurchaserName(undefined);
+							setPurchasersIdToDelete((prev) => (prev ? undefined : []));
+						}}
+					>
 						<Icon path={mdiAccountMinus} size={1} />
 					</button>
 				</div>
 			</header>
 			<div className="py-4">
 				<ul>
-					{purchasers.map((purchaser) => (
-						<li className="border-b-2 border-gray-300 py-2" key={purchaser.id}>
-							<div className="truncate">{purchaser.name}</div>
-						</li>
-					))}
-					{tempPurchasers.map((purchaser) => (
-						<li className="border-b-2 border-gray-300 py-2" key={purchaser.id}>
-							<div className="truncate">{purchaser.name}</div>
-						</li>
-					))}
+					{purchasers.map((purchaser) => renderMemberLi(purchaser))}
+					{tempPurchasers.map((purchaser) => renderMemberLi(purchaser))}
 					{inputPurchaserName !== undefined && (
 						<li className="border-b-2 border-gray-300 py-2">
 							<div className="bg-blue-50 flex justify-between px-1">
@@ -137,6 +206,7 @@ export const ClientPurchasersDialog = ({
 						if (inputPurchaserName === undefined) {
 							dialogRef.current?.close();
 							createPurchaser();
+							deletePurchasers();
 							setTempPurchasers([]);
 						}
 						if (inputPurchaserName) {
@@ -297,6 +367,7 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 					onClose={() => setClientPurchasersDialogIsOpen(false)}
 					purchasers={purchasers}
 					onCreate={fetchPurchaser}
+					onDelete={fetchPurchaser}
 				/>
 			</form>
 		</>
