@@ -165,11 +165,10 @@ type ClientFormProps = {
 export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 	const supabase = createClient();
 
-	// TODO: refetchedPurchasersが変更されたときに自動的にフォームの項目が増減されるように
 	const [refetchedPurchasers, setRefetchedPurchasers] =
 		useState<{ id: number; name: string }[]>();
 
-	const purchasers = initialPurchasers ?? refetchedPurchasers;
+	const purchasers = refetchedPurchasers ?? initialPurchasers;
 
 	const [clientPurchasersDialogIsOpen, setClientPurchasersDialogIsOpen] =
 		useState(false);
@@ -208,6 +207,23 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 	useEffect(() => {
 		form.errors && alert(form.errors);
 	}, [form.errors]);
+
+	useEffect(() => {
+		if (!refetchedPurchasers) return;
+		if (fields.purchasers.getFieldList().length === refetchedPurchasers?.length)
+			return;
+
+		for (const _ of fields.purchasers.getFieldList()) {
+			form.remove({ name: fields.purchasers.name, index: 0 });
+		}
+		refetchedPurchasers?.forEach((x, index) => {
+			form.insert({
+				name: fields.purchasers.name,
+				index,
+				defaultValue: { name: x.name },
+			});
+		});
+	}, [fields.purchasers, form, refetchedPurchasers]);
 
 	return (
 		<>
