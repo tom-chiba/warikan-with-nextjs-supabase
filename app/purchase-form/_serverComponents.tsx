@@ -13,5 +13,5 @@ export const ServerForm = async () => {
 
 	if (!purchasers) return <span>nodata</span>;
 
-	return <ClientForm purchasers={purchasers} />;
+	return <ClientForm initialPurchasers={purchasers} />;
 };

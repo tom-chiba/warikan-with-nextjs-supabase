@@ -1,6 +1,7 @@
 "use client";
 
 import Input from "@/components/Input";
+import { createClient } from "@/utils/supabase/client";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { mdiAccountMinus, mdiAccountPlus, mdiClose } from "@mdi/js";
@@ -37,15 +38,39 @@ type PurchasersDialogProps = {
 	}[];
 	isOpen: boolean;
 	onClose: () => void;
+	onCreate: () => void;
 };
 
 export const ClientPurchasersDialog = ({
 	purchasers,
 	isOpen,
 	onClose,
+	onCreate,
 }: PurchasersDialogProps) => {
+	const supabase = createClient();
+
 	const dialogRef = useRef<HTMLDialogElement>(null);
-	const [inAddMode, setInAddMode] = useState(false);
+	const [inputPurchaserName, setInputPurchaserName] = useState<
+		string | undefined
+	>();
+	const [tempPurchasers, setTempPurchasers] = useState<
+		{
+			id: string;
+			name: string;
+		}[]
+	>([]);
+
+	const createPurchaser = async () => {
+		if (!tempPurchasers.length) return;
+
+		const { error } = await supabase
+			.from("purchasers")
+			.insert(tempPurchasers.map((purchaser) => ({ name: purchaser.name })))
+			.select();
+		if (error) throw new Error(error.message);
+
+		onCreate();
+	};
 
 	useEffect(() => {
 		if (isOpen) {
@@ -63,7 +88,12 @@ export const ClientPurchasersDialog = ({
 					<button
 						className="border px-1 bg-gray-200"
 						type="button"
-						onClick={() => setInAddMode((prev) => !prev)}
+						onClick={() =>
+							setInputPurchaserName((prev) => {
+								if (prev === undefined) return "";
+								return undefined;
+							})
+						}
 					>
 						<Icon path={mdiAccountPlus} size={1} />
 					</button>
@@ -79,12 +109,19 @@ export const ClientPurchasersDialog = ({
 							<div className="truncate">{purchaser.name}</div>
 						</li>
 					))}
-					{inAddMode && (
+					{tempPurchasers.map((purchaser) => (
+						<li className="border-b-2 border-gray-300 py-2" key={purchaser.id}>
+							<div className="truncate">{purchaser.name}</div>
+						</li>
+					))}
+					{inputPurchaserName !== undefined && (
 						<li className="border-b-2 border-gray-300 py-2">
 							<div className="bg-blue-50 flex justify-between px-1">
 								<input
 									type="text"
 									className="bg-transparent flex-1 focus-visible:outline-none"
+									value={inputPurchaserName}
+									onChange={(e) => setInputPurchaserName(e.target.value)}
 								/>
 								<Icon path={mdiClose} size={1} className="text-gray-400" />
 							</div>
@@ -96,7 +133,20 @@ export const ClientPurchasersDialog = ({
 				<button
 					className="bg-gray-200 px-3 shadow"
 					type="button"
-					onClick={() => dialogRef.current?.close()}
+					onClick={() => {
+						if (inputPurchaserName === undefined) {
+							dialogRef.current?.close();
+							createPurchaser();
+							setTempPurchasers([]);
+						}
+						if (inputPurchaserName) {
+							setTempPurchasers((prev) => [
+								...prev,
+								{ id: new Date().toString(), name: inputPurchaserName },
+							]);
+						}
+						setInputPurchaserName(undefined);
+					}}
 				>
 					完了
 				</button>
@@ -106,19 +156,27 @@ export const ClientPurchasersDialog = ({
 };
 
 type ClientFormProps = {
-	purchasers: {
+	initialPurchasers: {
 		id: number;
 		name: string;
 	}[];
 };
 
-export const ClientForm = ({ purchasers }: ClientFormProps) => {
+export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
+	const supabase = createClient();
+
+	// TODO: refetchedPurchasersが変更されたときに自動的にフォームの項目が増減されるように
+	const [refetchedPurchasers, setRefetchedPurchasers] =
+		useState<{ id: number; name: string }[]>();
+
+	const purchasers = initialPurchasers ?? refetchedPurchasers;
+
 	const [clientPurchasersDialogIsOpen, setClientPurchasersDialogIsOpen] =
 		useState(false);
 
 	const createPurchaseWithPurchasers = createPurchase.bind(
 		null,
-		purchasers.map((x) => x.id),
+		initialPurchasers.map((x) => x.id),
 	);
 
 	const [lastResult, action] = useFormState(
@@ -132,10 +190,20 @@ export const ClientForm = ({ purchasers }: ClientFormProps) => {
 		},
 		shouldValidate: "onBlur",
 		defaultValue: {
-			purchasers: purchasers.map((x) => ({ name: x.name })),
+			purchasers: initialPurchasers.map((x) => ({ name: x.name })),
 		},
 	});
 	const purchasersFieldList = fields.purchasers.getFieldList();
+
+	const fetchPurchaser = async () => {
+		const { data: purchasers, error } = await supabase
+			.from("purchasers")
+			.select("id, name")
+			.order("created_at", { ascending: true });
+		if (error) throw new Error(error.message);
+
+		setRefetchedPurchasers(purchasers);
+	};
 
 	useEffect(() => {
 		form.errors && alert(form.errors);
@@ -212,6 +280,7 @@ export const ClientForm = ({ purchasers }: ClientFormProps) => {
 					isOpen={clientPurchasersDialogIsOpen}
 					onClose={() => setClientPurchasersDialogIsOpen(false)}
 					purchasers={purchasers}
+					onCreate={fetchPurchaser}
 				/>
 			</form>
 		</>

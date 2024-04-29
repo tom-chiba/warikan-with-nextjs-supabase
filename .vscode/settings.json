@@ -1,5 +1,5 @@
 {
-	"cSpell.words": ["hookform", "supabase"],
+	"cSpell.words": ["hookform", "refetched", "supabase"],
 	"editor.defaultFormatter": "biomejs.biome",
 	"editor.codeActionsOnSave": {
 		"quickfix.biome": "explicit",
