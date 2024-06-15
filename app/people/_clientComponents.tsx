@@ -1,7 +1,7 @@
 "use client";
 
 import Input from "@/components/Input";
-import type { Database } from "@/database.types";
+import type { Tables } from "@/database.types";
 import { createClient } from "@/utils/supabase/client";
 import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
@@ -35,7 +35,7 @@ export const Table = () => {
 
 	const [purchasers, setPurchasers] = useState<
 		| {
-				data: Database["public"]["Tables"]["purchasers"]["Row"];
+				data: Tables<"purchasers">;
 				isEditMode: boolean;
 		  }[]
 		| null
