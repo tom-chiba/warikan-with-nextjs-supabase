@@ -342,6 +342,10 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 				<div>
 					<span>割勘金額</span>
 					<div>
+						<input type="checkbox" id="equallyDivideCheck" />
+						<label htmlFor="equallyDivideCheck">等分</label>
+					</div>
+					<div>
 						{purchasersFieldList.map((x) => {
 							const fieldSet = x.getFieldset();
 
