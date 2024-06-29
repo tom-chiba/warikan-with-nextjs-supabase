@@ -6,7 +6,13 @@ import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { mdiAccountMinus, mdiAccountPlus, mdiClose } from "@mdi/js";
 import Icon from "@mdi/react";
-import { useEffect, useRef, useState } from "react";
+import {
+	type ForwardedRef,
+	forwardRef,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import { useFormState } from "react-dom";
 import { purchaseSchema } from "./_components";
 import { createPurchase } from "./_serverActions";
@@ -15,21 +21,33 @@ type AmountEntryFieldProps = {
 	id: string;
 	label: string;
 	inputName: string;
+	onChange?: (newValue: string) => void;
 };
 
-const AmountEntryField = ({ id, label, inputName }: AmountEntryFieldProps) => {
-	return (
-		<div className="flex gap-4 border-b-2 border-gray-300 p-1 min-w-0">
-			<label className="truncate" htmlFor={id}>
-				{label}
-			</label>
-			<div className="flex gap-1">
-				<Input id={id} name={inputName} size="small" />
-				<span>円</span>
+const AmountEntryField = forwardRef(
+	(
+		{ id, label, inputName, onChange }: AmountEntryFieldProps,
+		inputRef: ForwardedRef<HTMLInputElement>,
+	) => {
+		return (
+			<div className="flex gap-4 border-b-2 border-gray-300 p-1 min-w-0">
+				<label className="truncate" htmlFor={id}>
+					{label}
+				</label>
+				<div className="flex gap-1">
+					<Input
+						id={id}
+						name={inputName}
+						size="small"
+						onChange={(e) => onChange?.(e.target.value)}
+						ref={inputRef}
+					/>
+					<span>円</span>
+				</div>
 			</div>
-		</div>
-	);
-};
+		);
+	},
+);
 
 type PurchasersDialogProps = {
 	purchasers: {
