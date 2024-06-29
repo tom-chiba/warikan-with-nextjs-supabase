@@ -282,6 +282,33 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 	});
 	const purchasersFieldList = fields.purchasers.getFieldList();
 
+	const amountPaidMapRefs = useRef<Map<string, HTMLInputElement> | null>(null);
+	const amountToPayMapRefs = useRef<Map<string, HTMLInputElement> | null>(null);
+	const getAmountPaidMap = () => {
+		if (!amountPaidMapRefs.current) amountPaidMapRefs.current = new Map();
+
+		return amountPaidMapRefs.current;
+	};
+	const getAmountToPayMap = () => {
+		if (!amountToPayMapRefs.current) amountToPayMapRefs.current = new Map();
+
+		return amountToPayMapRefs.current;
+	};
+
+	const equallyDivideCheckRef = useRef<HTMLInputElement>(null);
+
+	const divideEqually = () => {
+		const amountPaidMap = getAmountPaidMap();
+		const amountToPayMap = getAmountToPayMap();
+
+		let amountPaidSum = 0;
+		for (const amountPaidRef of Array.from(amountPaidMap.values()))
+			amountPaidSum += Number(amountPaidRef.value);
+
+		for (const amountToPayRef of Array.from(amountToPayMap.values()))
+			amountToPayRef.value = String(amountPaidSum / purchasers.length);
+	};
+
 	const fetchPurchaser = async () => {
 		const { data: purchasers, error } = await supabase
 			.from("purchasers")
@@ -350,6 +377,19 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 										id={fieldSet.amountPaid.id}
 										label={fieldSet.name.initialValue ?? ""}
 										inputName={fieldSet.amountPaid.name}
+										ref={(node) => {
+											const amountPaidMap = getAmountPaidMap();
+											if (node) {
+												amountPaidMap.set(fieldSet.amountPaid.id, node);
+											} else {
+												amountPaidMap.delete(fieldSet.amountPaid.id);
+											}
+										}}
+										onChange={() => {
+											if (!equallyDivideCheckRef.current?.checked) return;
+
+											divideEqually();
+										}}
 									/>
 									<p>{fieldSet.amountPaid.errors}</p>
 								</div>
@@ -360,7 +400,16 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 				<div>
 					<span>割勘金額</span>
 					<div>
-						<input type="checkbox" id="equallyDivideCheck" />
+						<input
+							ref={equallyDivideCheckRef}
+							type="checkbox"
+							id="equallyDivideCheck"
+							onChange={() => {
+								if (!equallyDivideCheckRef.current?.checked) return;
+
+								divideEqually();
+							}}
+						/>
 						<label htmlFor="equallyDivideCheck">等分</label>
 					</div>
 					<div>
@@ -376,6 +425,14 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 										id={fieldSet.amountToPay.id}
 										label={fieldSet.name.initialValue ?? ""}
 										inputName={fieldSet.amountToPay.name}
+										ref={(node) => {
+											const amountToPayMap = getAmountToPayMap();
+											if (node) {
+												amountToPayMap.set(fieldSet.amountToPay.id, node);
+											} else {
+												amountToPayMap.delete(fieldSet.amountToPay.id);
+											}
+										}}
 									/>
 									<p>{fieldSet.amountToPay.errors}</p>
 								</div>
