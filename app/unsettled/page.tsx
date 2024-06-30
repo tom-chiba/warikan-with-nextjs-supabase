@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { TabList } from "../purchase-form/_components";
-import { Table } from "./_component";
+import { Table } from "./_clientComponents";
 
-export default function PurchaseForm() {
+export default function Unsettled() {
 	return (
 		<div>
 			<h1>未精算リストページ</h1>
