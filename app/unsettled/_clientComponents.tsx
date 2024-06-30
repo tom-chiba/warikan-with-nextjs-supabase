@@ -177,6 +177,16 @@ export const ClientUnsettledBlock = ({
 		queryFn: readPurchases,
 	});
 
+	const settlePurchases = async (purchaseIds: number[]) => {
+		const { error } = await supabase
+			.from("purchases")
+			.update({ is_settled: true })
+			.in("id", purchaseIds)
+			.select();
+		if (error) console.error(error);
+		purchasesCache.refetch();
+	};
+
 	return (
 		<>
 			<ul>
@@ -199,6 +209,12 @@ export const ClientUnsettledBlock = ({
 					</li>
 				))}
 			</ul>
+			<button
+				type="button"
+				onClick={() => settlePurchases(selectedPurchaseIds)}
+			>
+				まとめて精算
+			</button>
 			<Table
 				selectedPurchaseIds={selectedPurchaseIds}
 				onSelectPurchase={(targetId) => {
