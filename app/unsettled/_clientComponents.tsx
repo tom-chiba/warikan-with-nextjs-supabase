@@ -1,22 +1,18 @@
 "use client";
 
 import { createClient } from "@/utils/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
-export const Table = () => {
+type TableProps = {
+	selectedPurchaseIds: number[];
+	onSelectPurchase: (targetId: number) => void;
+};
+
+const Table = ({ selectedPurchaseIds, onSelectPurchase }: TableProps) => {
 	const supabase = createClient();
 
-	const [purchases, setPurchases] = useState<
-		| {
-				id: number;
-				title: string;
-				date?: string;
-				totalAmount: number;
-		  }[]
-		| undefined
-	>();
-
-	const readPurchases = useCallback(async () => {
+	const readPurchases = async () => {
 		const { data: purchasesData, error: purchasesError } = await supabase
 			.from("purchases")
 			.select(
@@ -25,7 +21,7 @@ export const Table = () => {
         title,
         purchase_date,
         is_settled,
-        purchasers_purchases ( id, amount_paid, amount_to_pay )
+        purchasers_purchases ( id, purchaser_id, amount_paid, amount_to_pay )
       `,
 			)
 			.eq("is_settled", false)
@@ -34,8 +30,14 @@ export const Table = () => {
 			console.error(purchasesError);
 			return;
 		}
-		setPurchases(
-			purchasesData.map((x) => ({
+		return purchasesData;
+	};
+
+	const purchasesCache = useQuery({
+		queryKey: ["purchases"],
+		queryFn: readPurchases,
+		select: (data) =>
+			data?.map((x) => ({
 				id: x.id,
 				title: x.title,
 				date: x.purchase_date ?? undefined,
@@ -44,8 +46,7 @@ export const Table = () => {
 					0,
 				),
 			})),
-		);
-	}, [supabase]);
+	});
 
 	const deletePurchase = async (purchaseId: number) => {
 		const { error } = await supabase
@@ -53,7 +54,7 @@ export const Table = () => {
 			.delete()
 			.eq("id", purchaseId);
 		if (error) console.error(error);
-		readPurchases();
+		purchasesCache.refetch();
 	};
 
 	const settlePurchase = async (purchaseId: number) => {
@@ -63,18 +64,15 @@ export const Table = () => {
 			.eq("id", purchaseId)
 			.select();
 		if (error) console.error(error);
-		readPurchases();
+		purchasesCache.refetch();
 	};
-
-	useEffect(() => {
-		readPurchases();
-	}, [readPurchases]);
 
 	return (
 		<>
 			<table>
 				<thead>
 					<tr>
+						<th />
 						<th>購入品名</th>
 						<th>購入日</th>
 						<th>合計金額</th>
@@ -83,8 +81,15 @@ export const Table = () => {
 					</tr>
 				</thead>
 				<tbody>
-					{purchases?.map((x) => (
+					{purchasesCache.data?.map((x) => (
 						<tr key={x.id}>
+							<td>
+								<input
+									type="checkbox"
+									checked={selectedPurchaseIds.includes(x.id)}
+									onChange={() => onSelectPurchase(x.id)}
+								/>
+							</td>
 							<td>{x.title}</td>
 							<td>{x.date}</td>
 							<td>{x.totalAmount}</td>
@@ -112,6 +117,98 @@ export const Table = () => {
 					))}
 				</tbody>
 			</table>
+		</>
+	);
+};
+
+type ClientUnsettledBlockProps = {
+	initialPurchasers: {
+		id: number;
+		name: string;
+	}[];
+};
+
+export const ClientUnsettledBlock = ({
+	initialPurchasers,
+}: ClientUnsettledBlockProps) => {
+	const supabase = createClient();
+
+	const [selectedPurchaseIds, setSelectedPurchaseIds] = useState<number[]>([]);
+
+	const fetchPurchaser = async () => {
+		const { data: purchasers, error } = await supabase
+			.from("purchasers")
+			.select("id, name")
+			.order("created_at", { ascending: true });
+		if (error) throw new Error(error.message);
+
+		return purchasers;
+	};
+
+	const purchasersCache = useQuery({
+		queryKey: ["purchasers"],
+		queryFn: fetchPurchaser,
+		initialData: initialPurchasers,
+	});
+
+	const readPurchases = async () => {
+		const { data: purchasesData, error: purchasesError } = await supabase
+			.from("purchases")
+			.select(
+				`
+        id,
+        title,
+        purchase_date,
+        is_settled,
+        purchasers_purchases (id, purchaser_id, amount_paid, amount_to_pay )
+      `,
+			)
+			.eq("is_settled", false)
+			.order("created_at", { ascending: true });
+		if (purchasesError) {
+			console.error(purchasesError);
+			return;
+		}
+		return purchasesData;
+	};
+
+	const purchasesCache = useQuery({
+		queryKey: ["purchases"],
+		queryFn: readPurchases,
+	});
+
+	return (
+		<>
+			<ul>
+				{purchasersCache.data.map((x) => (
+					<li key={x.id}>
+						{x.name}が払う額:　
+						{purchasesCache.data?.reduce((previous, current) => {
+							if (!selectedPurchaseIds.includes(current.id)) return previous;
+							return (
+								previous +
+								(current.purchasers_purchases.find(
+									(y) => y.purchaser_id === x.id,
+								)?.amount_to_pay ?? 0) -
+								(current.purchasers_purchases.find(
+									(y) => y.purchaser_id === x.id,
+								)?.amount_paid ?? 0)
+							);
+						}, 0)}
+						円
+					</li>
+				))}
+			</ul>
+			<Table
+				selectedPurchaseIds={selectedPurchaseIds}
+				onSelectPurchase={(targetId) => {
+					setSelectedPurchaseIds((prev) => {
+						const prevWithoutTarget = prev.filter((x) => x !== targetId);
+						const alreadyIncludes = prevWithoutTarget.length === prev.length;
+						return alreadyIncludes ? [...prev, targetId] : prevWithoutTarget;
+					});
+				}}
+			/>
 		</>
 	);
 };

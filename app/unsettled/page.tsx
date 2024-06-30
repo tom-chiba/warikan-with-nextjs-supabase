@@ -1,5 +1,5 @@
 import { TabList } from "../purchase-form/_components";
-import { Table } from "./_clientComponents";
+import { ServerUnsettledBlock } from "./_serverComponents";
 
 export default function Unsettled() {
 	return (
@@ -12,7 +12,7 @@ export default function Unsettled() {
 					{ label: "精算済リスト", href: "settled" },
 				]}
 			/>
-			<Table />
+			<ServerUnsettledBlock />
 		</div>
 	);
 }
