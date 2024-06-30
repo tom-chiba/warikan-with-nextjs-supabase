@@ -6,6 +6,7 @@ import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { mdiAccountMinus, mdiAccountPlus, mdiClose } from "@mdi/js";
 import Icon from "@mdi/react";
+import { useQuery } from "@tanstack/react-query";
 import {
 	type ForwardedRef,
 	forwardRef,
@@ -50,7 +51,7 @@ const AmountEntryField = forwardRef(
 );
 
 type PurchasersDialogProps = {
-	purchasers: {
+	initialPurchasers: {
 		id: number;
 		name: string;
 	}[];
@@ -60,8 +61,8 @@ type PurchasersDialogProps = {
 	onDelete: () => void;
 };
 
-export const ClientPurchasersDialog = ({
-	purchasers,
+const ClientPurchasersDialog = ({
+	initialPurchasers,
 	isOpen,
 	onClose,
 	onCreate,
@@ -105,6 +106,21 @@ export const ClientPurchasersDialog = ({
 
 		onDelete();
 	};
+	const fetchPurchaser = async () => {
+		const { data: purchasers, error } = await supabase
+			.from("purchasers")
+			.select("id, name")
+			.order("created_at", { ascending: true });
+		if (error) throw new Error(error.message);
+
+		return purchasers;
+	};
+
+	const purchasersCache = useQuery({
+		queryKey: ["purchasers"],
+		queryFn: fetchPurchaser,
+		initialData: initialPurchasers,
+	});
 
 	const renderMemberLi = (
 		purchaser:
@@ -199,7 +215,7 @@ export const ClientPurchasersDialog = ({
 			</header>
 			<div className="py-4">
 				<ul>
-					{purchasers.map((purchaser) => renderMemberLi(purchaser))}
+					{purchasersCache.data.map((purchaser) => renderMemberLi(purchaser))}
 					{tempPurchasers.map((purchaser) => renderMemberLi(purchaser))}
 					{inputPurchaserName !== undefined && (
 						<li className="border-b-2 border-gray-300 py-2">
@@ -223,8 +239,10 @@ export const ClientPurchasersDialog = ({
 					onClick={() => {
 						if (inputPurchaserName === undefined) {
 							dialogRef.current?.close();
-							createPurchaser();
-							deletePurchasers();
+							(async () => {
+								await Promise.all([createPurchaser(), deletePurchasers()]);
+								purchasersCache.refetch();
+							})();
 							setTempPurchasers([]);
 						}
 						if (inputPurchaserName) {
@@ -252,11 +270,6 @@ type ClientFormProps = {
 
 export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 	const supabase = createClient();
-
-	const [refetchedPurchasers, setRefetchedPurchasers] =
-		useState<{ id: number; name: string }[]>();
-
-	const purchasers = refetchedPurchasers ?? initialPurchasers;
 
 	const [clientPurchasersDialogIsOpen, setClientPurchasersDialogIsOpen] =
 		useState(false);
@@ -306,7 +319,9 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 			amountPaidSum += Number(amountPaidRef.value);
 
 		for (const amountToPayRef of Array.from(amountToPayMap.values()))
-			amountToPayRef.value = String(amountPaidSum / purchasers.length);
+			amountToPayRef.value = String(
+				amountPaidSum / purchasersCache.data.length,
+			);
 	};
 
 	const fetchPurchaser = async () => {
@@ -316,29 +331,34 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 			.order("created_at", { ascending: true });
 		if (error) throw new Error(error.message);
 
-		setRefetchedPurchasers(purchasers);
+		return purchasers;
 	};
+
+	const purchasersCache = useQuery({
+		queryKey: ["purchasers"],
+		queryFn: fetchPurchaser,
+		initialData: initialPurchasers,
+	});
 
 	useEffect(() => {
 		form.errors && alert(form.errors);
 	}, [form.errors]);
 
 	useEffect(() => {
-		if (!refetchedPurchasers) return;
-		if (fields.purchasers.getFieldList().length === refetchedPurchasers?.length)
+		if (fields.purchasers.getFieldList().length === purchasersCache.data.length)
 			return;
 
 		for (const _ of fields.purchasers.getFieldList()) {
 			form.remove({ name: fields.purchasers.name, index: 0 });
 		}
-		refetchedPurchasers?.forEach((x, index) => {
+		purchasersCache.data.forEach((x, index) => {
 			form.insert({
 				name: fields.purchasers.name,
 				index,
 				defaultValue: { name: x.name },
 			});
 		});
-	}, [fields.purchasers, form, refetchedPurchasers]);
+	}, [fields.purchasers, form, purchasersCache.data]);
 
 	return (
 		<>
@@ -444,7 +464,7 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 				<ClientPurchasersDialog
 					isOpen={clientPurchasersDialogIsOpen}
 					onClose={() => setClientPurchasersDialogIsOpen(false)}
-					purchasers={purchasers}
+					initialPurchasers={purchasersCache.data}
 					onCreate={fetchPurchaser}
 					onDelete={fetchPurchaser}
 				/>
