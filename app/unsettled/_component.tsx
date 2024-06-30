@@ -72,7 +72,6 @@ export const Table = () => {
 
 	return (
 		<>
-			<p>削除後リロードしないと反映されません</p>
 			<table>
 				<thead>
 					<tr>
