@@ -1,21 +1,20 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { TabList } from "./_components";
+import { ServerForm } from "./_serverComponents";
 
 export default function Index() {
 	return (
 		<div>
-			<h1>Top Page</h1>
-			<div>
-				<Link href="/people">購入者ページへ</Link>
-			</div>
-			<div>
-				<Link href="/purchase-form">購入品入力ページへ</Link>
-			</div>
-			<div>
-				<Link href="/unsettled">未精算リストページへ</Link>
-			</div>
-			<div>
-				<Link href="/settled">精算済リストページへ</Link>
-			</div>
+			<h1>購入品入力ページ</h1>
+			<TabList
+				tabItems={[
+					{ label: "入力", href: "/purchase-form" },
+					{ label: "未精算リスト", href: "/unsettled" },
+					{ label: "精算済リスト", href: "/settled" },
+				]}
+			/>
+			<ServerForm />
 		</div>
 	);
 }
