@@ -106,7 +106,7 @@ const ClientPurchasersDialog = ({
 
 		onDelete();
 	};
-	const fetchPurchaser = async () => {
+	const readPurchasers = async () => {
 		const { data: purchasers, error } = await supabase
 			.from("purchasers")
 			.select("id, name")
@@ -118,7 +118,7 @@ const ClientPurchasersDialog = ({
 
 	const purchasersCache = useQuery({
 		queryKey: ["purchasers"],
-		queryFn: fetchPurchaser,
+		queryFn: readPurchasers,
 		initialData: initialPurchasers,
 	});
 
@@ -324,7 +324,7 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 			);
 	};
 
-	const fetchPurchaser = async () => {
+	const readPurchasers = async () => {
 		const { data: purchasers, error } = await supabase
 			.from("purchasers")
 			.select("id, name")
@@ -336,7 +336,7 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 
 	const purchasersCache = useQuery({
 		queryKey: ["purchasers"],
-		queryFn: fetchPurchaser,
+		queryFn: readPurchasers,
 		initialData: initialPurchasers,
 	});
 
@@ -465,8 +465,8 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 					isOpen={clientPurchasersDialogIsOpen}
 					onClose={() => setClientPurchasersDialogIsOpen(false)}
 					initialPurchasers={purchasersCache.data}
-					onCreate={fetchPurchaser}
-					onDelete={fetchPurchaser}
+					onCreate={readPurchasers}
+					onDelete={readPurchasers}
 				/>
 			</form>
 		</>

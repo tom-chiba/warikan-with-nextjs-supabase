@@ -135,7 +135,7 @@ export const ClientUnsettledBlock = ({
 
 	const [selectedPurchaseIds, setSelectedPurchaseIds] = useState<number[]>([]);
 
-	const fetchPurchaser = async () => {
+	const readPurchasers = async () => {
 		const { data: purchasers, error } = await supabase
 			.from("purchasers")
 			.select("id, name")
@@ -147,7 +147,7 @@ export const ClientUnsettledBlock = ({
 
 	const purchasersCache = useQuery({
 		queryKey: ["purchasers"],
-		queryFn: fetchPurchaser,
+		queryFn: readPurchasers,
 		initialData: initialPurchasers,
 	});
 
