@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { TabList } from "../components";
-import { Table } from "./component";
+import { Table } from "./clientComponent";
 
 export default function PurchaseForm() {
 	return (
