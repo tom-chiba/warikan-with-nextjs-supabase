@@ -1,5 +1,5 @@
 import AuthButton from "@/components/AuthButton";
-import { Providers } from "./_providers";
+import { Providers } from "./providers";
 
 export default function RootLayout({
 	children,

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { TabList } from "./_components";
-import { ServerForm } from "./_serverComponents";
+import { TabList } from "./components";
+import { ServerForm } from "./serverComponents";
 
 export default function Index() {
 	return (

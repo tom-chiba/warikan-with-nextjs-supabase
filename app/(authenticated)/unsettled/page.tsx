@@ -1,5 +1,5 @@
-import { TabList } from "../_components";
-import { ServerUnsettledBlock } from "./_serverComponents";
+import { TabList } from "../components";
+import { ServerUnsettledBlock } from "./serverComponents";
 
 export default function Unsettled() {
 	return (

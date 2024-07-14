@@ -15,8 +15,8 @@ import {
 	useState,
 } from "react";
 import { useFormState } from "react-dom";
-import { purchaseSchema } from "./_components";
-import { createPurchase } from "./_serverActions";
+import { purchaseSchema } from "./components";
+import { createPurchase } from "./serverActions";
 
 type AmountEntryFieldProps = {
 	id: string;

@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { parseWithZod } from "@conform-to/zod";
-import { purchaseSchema } from "./_components";
+import { purchaseSchema } from "./components";
 
 export const createPurchase = async (
 	purchaserIds: number[],

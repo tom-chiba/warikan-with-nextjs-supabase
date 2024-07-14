@@ -1,7 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
-import { ClientForm } from "./_clientComponents";
+import { ClientUnsettledBlock } from "./clientComponents";
 
-export const ServerForm = async () => {
+export const ServerUnsettledBlock = async () => {
 	const supabase = createClient();
 
 	const { data: purchasers, error } = await supabase
@@ -13,5 +13,5 @@ export const ServerForm = async () => {
 
 	if (!purchasers) return <span>nodata</span>;
 
-	return <ClientForm initialPurchasers={purchasers} />;
+	return <ClientUnsettledBlock initialPurchasers={purchasers} />;
 };
