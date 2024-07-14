@@ -4,7 +4,7 @@ import ErrorMessage from "@/components/ErrorMessage";
 import NodataMessage from "@/components/NodataMessage";
 import Loader from "@/components/clients/Loader";
 import { createClient } from "@/utils/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 export const Table = () => {
@@ -43,24 +43,32 @@ export const Table = () => {
 			})),
 	});
 
-	const deletePurchase = async (purchaseId: number) => {
-		const { error } = await supabase
-			.from("purchases")
-			.delete()
-			.eq("id", purchaseId);
-		if (error) console.error(error);
-		queryClient.invalidateQueries({ queryKey: ["purchases"] });
-	};
+	const deletePurchaseMutation = useMutation({
+		mutationFn: async (purchaseId: number) => {
+			const { error } = await supabase
+				.from("purchases")
+				.delete()
+				.eq("id", purchaseId);
+			if (error) throw new Error(error.message);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["purchases"] });
+		},
+	});
 
-	const unsettlePurchase = async (purchaseId: number) => {
-		const { error } = await supabase
-			.from("purchases")
-			.update({ is_settled: false })
-			.eq("id", purchaseId)
-			.select();
-		if (error) console.error(error);
-		queryClient.invalidateQueries({ queryKey: ["purchases"] });
-	};
+	const unsettlePurchaseMutation = useMutation({
+		mutationFn: async (purchaseId: number) => {
+			const { error } = await supabase
+				.from("purchases")
+				.update({ is_settled: false })
+				.eq("id", purchaseId)
+				.select();
+			if (error) throw new Error(error.message);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["purchases"] });
+		},
+	});
 
 	useEffect(() => {
 		queryClient.invalidateQueries({ queryKey: ["purchases", "settled"] });
@@ -95,7 +103,7 @@ export const Table = () => {
 									<button
 										type="button"
 										onClick={() => {
-											unsettlePurchase(x.id);
+											unsettlePurchaseMutation.mutate(x.id);
 										}}
 									>
 										未精算
@@ -105,7 +113,7 @@ export const Table = () => {
 									<button
 										type="button"
 										onClick={() => {
-											deletePurchase(x.id);
+											deletePurchaseMutation.mutate(x.id);
 										}}
 									>
 										削除

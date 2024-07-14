@@ -6,7 +6,7 @@ import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { mdiAccountMinus, mdiAccountPlus, mdiClose } from "@mdi/js";
 import Icon from "@mdi/react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	type ForwardedRef,
 	forwardRef,
@@ -69,6 +69,7 @@ const ClientPurchasersDialog = ({
 	onDelete,
 }: PurchasersDialogProps) => {
 	const supabase = createClient();
+	const queryClient = useQueryClient();
 
 	const dialogRef = useRef<HTMLDialogElement>(null);
 	const [inputPurchaserName, setInputPurchaserName] = useState<
@@ -98,28 +99,31 @@ const ClientPurchasersDialog = ({
 		initialData: initialPurchasers,
 	});
 
-	const createPurchaser = async () => {
-		if (!tempPurchasers.length) return;
+	const createPurchaserMutation = useMutation({
+		mutationFn: async () => {
+			if (!tempPurchasers.length) return;
 
-		const { error } = await supabase
-			.from("purchasers")
-			.insert(tempPurchasers.map((purchaser) => ({ name: purchaser.name })))
-			.select();
-		if (error) throw new Error(error.message);
+			const { error } = await supabase
+				.from("purchasers")
+				.insert(tempPurchasers.map((purchaser) => ({ name: purchaser.name })))
+				.select();
+			if (error) throw new Error(error.message);
+		},
+		onSuccess: onCreate,
+	});
 
-		onCreate();
-	};
-	const deletePurchasers = async () => {
-		if (!purchasersIdToDelete) return;
+	const deletePurchasersMutation = useMutation({
+		mutationFn: async () => {
+			if (!purchasersIdToDelete) return;
 
-		const { error } = await supabase
-			.from("purchasers")
-			.delete()
-			.in("id", purchasersIdToDelete);
-		if (error) throw new Error(error.message);
-
-		onDelete();
-	};
+			const { error } = await supabase
+				.from("purchasers")
+				.delete()
+				.in("id", purchasersIdToDelete);
+			if (error) throw new Error(error.message);
+		},
+		onSuccess: onDelete,
+	});
 
 	const renderMemberLi = (
 		purchaser:
@@ -239,8 +243,11 @@ const ClientPurchasersDialog = ({
 						if (inputPurchaserName === undefined) {
 							dialogRef.current?.close();
 							(async () => {
-								await Promise.all([createPurchaser(), deletePurchasers()]);
-								purchasersCache.refetch();
+								await Promise.all([
+									createPurchaserMutation.mutate(),
+									deletePurchasersMutation.mutate(),
+								]);
+								queryClient.invalidateQueries({ queryKey: ["purchasers"] });
 							})();
 							setTempPurchasers([]);
 						}

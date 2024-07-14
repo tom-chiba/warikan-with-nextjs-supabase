@@ -4,7 +4,7 @@ import ErrorMessage from "@/components/ErrorMessage";
 import NodataMessage from "@/components/NodataMessage";
 import Loader from "@/components/clients/Loader";
 import { createClient } from "@/utils/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 type TableProps = {
@@ -48,24 +48,32 @@ const Table = ({ selectedPurchaseIds, onSelectPurchase }: TableProps) => {
 			})),
 	});
 
-	const deletePurchase = async (purchaseId: number) => {
-		const { error } = await supabase
-			.from("purchases")
-			.delete()
-			.eq("id", purchaseId);
-		if (error) console.error(error);
-		queryClient.invalidateQueries({ queryKey: ["purchases"] });
-	};
+	const deletePurchaseMutation = useMutation({
+		mutationFn: async (purchaseId: number) => {
+			const { error } = await supabase
+				.from("purchases")
+				.delete()
+				.eq("id", purchaseId);
+			if (error) throw new Error(error.message);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["purchases"] });
+		},
+	});
 
-	const settlePurchase = async (purchaseId: number) => {
-		const { error } = await supabase
-			.from("purchases")
-			.update({ is_settled: true })
-			.eq("id", purchaseId)
-			.select();
-		if (error) console.error(error);
-		queryClient.invalidateQueries({ queryKey: ["purchases"] });
-	};
+	const settlePurchaseMutation = useMutation({
+		mutationFn: async (purchaseId: number) => {
+			const { error } = await supabase
+				.from("purchases")
+				.update({ is_settled: true })
+				.eq("id", purchaseId)
+				.select();
+			if (error) throw new Error(error.message);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["purchases"] });
+		},
+	});
 
 	useEffect(() => {
 		queryClient.invalidateQueries({ queryKey: ["purchases", "unsettled"] });
@@ -108,7 +116,7 @@ const Table = ({ selectedPurchaseIds, onSelectPurchase }: TableProps) => {
 									<button
 										type="button"
 										onClick={() => {
-											settlePurchase(x.id);
+											settlePurchaseMutation.mutate(x.id);
 										}}
 									>
 										精算
@@ -118,7 +126,7 @@ const Table = ({ selectedPurchaseIds, onSelectPurchase }: TableProps) => {
 									<button
 										type="button"
 										onClick={() => {
-											deletePurchase(x.id);
+											deletePurchaseMutation.mutate(x.id);
 										}}
 									>
 										削除
@@ -144,6 +152,7 @@ export const ClientUnsettledBlock = ({
 	initialPurchasers,
 }: ClientUnsettledBlockProps) => {
 	const supabase = createClient();
+	const queryClient = useQueryClient();
 
 	const [selectedPurchaseIds, setSelectedPurchaseIds] = useState<number[]>([]);
 
@@ -183,15 +192,19 @@ export const ClientUnsettledBlock = ({
 		},
 	});
 
-	const settlePurchases = async (purchaseIds: number[]) => {
-		const { error } = await supabase
-			.from("purchases")
-			.update({ is_settled: true })
-			.in("id", purchaseIds)
-			.select();
-		if (error) console.error(error);
-		purchasesCache.refetch();
-	};
+	const settlePurchasesMutation = useMutation({
+		mutationFn: async (purchaseIds: number[]) => {
+			const { error } = await supabase
+				.from("purchases")
+				.update({ is_settled: true })
+				.in("id", purchaseIds)
+				.select();
+			if (error) throw new Error(error.message);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["purchases"] });
+		},
+	});
 
 	return (
 		<>
@@ -217,7 +230,7 @@ export const ClientUnsettledBlock = ({
 			</ul>
 			<button
 				type="button"
-				onClick={() => settlePurchases(selectedPurchaseIds)}
+				onClick={() => settlePurchasesMutation.mutate(selectedPurchaseIds)}
 			>
 				まとめて精算
 			</button>
