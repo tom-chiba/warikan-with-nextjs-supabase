@@ -1,5 +1,4 @@
 import AuthButton from "@/components/AuthButton";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GeistSans } from "geist/font/sans";
 import { Providers } from "./_providers";
 import "./globals.css";
@@ -13,8 +12,6 @@ export const metadata = {
 	title: "Next.js and Supabase Starter Kit",
 	description: "The fastest way to build apps with Next.js and Supabase",
 };
-
-const queryClient = new QueryClient();
 
 export default function RootLayout({
 	children,
