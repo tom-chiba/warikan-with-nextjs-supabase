@@ -11,28 +11,26 @@ export const Table = () => {
 	const supabase = createClient();
 	const queryClient = useQueryClient();
 
-	const readPurchases = async () => {
-		const { data: purchasesData, error: purchasesError } = await supabase
-			.from("purchases")
-			.select(
-				`
-        id,
-        title,
-        purchase_date,
-        is_settled,
-        purchasers_purchases ( id, amount_paid, amount_to_pay )
-      `,
-			)
-			.eq("is_settled", true)
-			.order("created_at", { ascending: true });
-		if (purchasesError) throw new Error(purchasesError.message);
-
-		return purchasesData;
-	};
-
 	const purchasesCache = useQuery({
 		queryKey: ["purchases", "settled"],
-		queryFn: readPurchases,
+		queryFn: async () => {
+			const { data: purchasesData, error: purchasesError } = await supabase
+				.from("purchases")
+				.select(
+					`
+					id,
+					title,
+					purchase_date,
+					is_settled,
+					purchasers_purchases ( id, amount_paid, amount_to_pay )
+				`,
+				)
+				.eq("is_settled", true)
+				.order("created_at", { ascending: true });
+			if (purchasesError) throw new Error(purchasesError.message);
+
+			return purchasesData;
+		},
 		select: (data) =>
 			data.map((x) => ({
 				id: x.id,

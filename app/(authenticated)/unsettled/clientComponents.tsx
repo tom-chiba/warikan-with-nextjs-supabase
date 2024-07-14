@@ -16,28 +16,26 @@ const Table = ({ selectedPurchaseIds, onSelectPurchase }: TableProps) => {
 	const supabase = createClient();
 	const queryClient = useQueryClient();
 
-	const readPurchases = async () => {
-		const { data: purchasesData, error: purchasesError } = await supabase
-			.from("purchases")
-			.select(
-				`
-        id,
-        title,
-        purchase_date,
-        is_settled,
-        purchasers_purchases ( id, purchaser_id, amount_paid, amount_to_pay )
-      `,
-			)
-			.eq("is_settled", false)
-			.order("created_at", { ascending: true });
-		if (purchasesError) throw new Error(purchasesError.message);
-
-		return purchasesData;
-	};
-
 	const purchasesCache = useQuery({
 		queryKey: ["purchases", "unsettled"],
-		queryFn: readPurchases,
+		queryFn: async () => {
+			const { data: purchasesData, error: purchasesError } = await supabase
+				.from("purchases")
+				.select(
+					`
+					id,
+					title,
+					purchase_date,
+					is_settled,
+					purchasers_purchases ( id, purchaser_id, amount_paid, amount_to_pay )
+				`,
+				)
+				.eq("is_settled", false)
+				.order("created_at", { ascending: true });
+			if (purchasesError) throw new Error(purchasesError.message);
+
+			return purchasesData;
+		},
 		select: (data) =>
 			data?.map((x) => ({
 				id: x.id,
@@ -149,46 +147,40 @@ export const ClientUnsettledBlock = ({
 
 	const [selectedPurchaseIds, setSelectedPurchaseIds] = useState<number[]>([]);
 
-	const readPurchasers = async () => {
-		const { data: purchasers, error } = await supabase
-			.from("purchasers")
-			.select("id, name")
-			.order("created_at", { ascending: true });
-		if (error) throw new Error(error.message);
-
-		return purchasers;
-	};
-
 	const purchasersCache = useQuery({
 		queryKey: ["purchasers"],
-		queryFn: readPurchasers,
+		queryFn: async () => {
+			const { data: purchasers, error } = await supabase
+				.from("purchasers")
+				.select("id, name")
+				.order("created_at", { ascending: true });
+			if (error) throw new Error(error.message);
+
+			return purchasers;
+		},
 		initialData: initialPurchasers,
 	});
 
-	const readPurchases = async () => {
-		const { data: purchasesData, error: purchasesError } = await supabase
-			.from("purchases")
-			.select(
-				`
-        id,
-        title,
-        purchase_date,
-        is_settled,
-        purchasers_purchases (id, purchaser_id, amount_paid, amount_to_pay )
-      `,
-			)
-			.eq("is_settled", false)
-			.order("created_at", { ascending: true });
-		if (purchasesError) {
-			console.error(purchasesError);
-			return;
-		}
-		return purchasesData;
-	};
-
 	const purchasesCache = useQuery({
 		queryKey: ["purchases"],
-		queryFn: readPurchases,
+		queryFn: async () => {
+			const { data: purchasesData, error: purchasesError } = await supabase
+				.from("purchases")
+				.select(
+					`
+					id,
+					title,
+					purchase_date,
+					is_settled,
+					purchasers_purchases (id, purchaser_id, amount_paid, amount_to_pay )
+				`,
+				)
+				.eq("is_settled", false)
+				.order("created_at", { ascending: true });
+			if (purchasesError) throw new Error(purchasesError.message);
+
+			return purchasesData;
+		},
 	});
 
 	const settlePurchases = async (purchaseIds: number[]) => {

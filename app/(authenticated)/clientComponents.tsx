@@ -84,6 +84,20 @@ const ClientPurchasersDialog = ({
 		(number | string)[] | undefined
 	>();
 
+	const purchasersCache = useQuery({
+		queryKey: ["purchasers"],
+		queryFn: async () => {
+			const { data: purchasers, error } = await supabase
+				.from("purchasers")
+				.select("id, name")
+				.order("created_at", { ascending: true });
+			if (error) throw new Error(error.message);
+
+			return purchasers;
+		},
+		initialData: initialPurchasers,
+	});
+
 	const createPurchaser = async () => {
 		if (!tempPurchasers.length) return;
 
@@ -106,21 +120,6 @@ const ClientPurchasersDialog = ({
 
 		onDelete();
 	};
-	const readPurchasers = async () => {
-		const { data: purchasers, error } = await supabase
-			.from("purchasers")
-			.select("id, name")
-			.order("created_at", { ascending: true });
-		if (error) throw new Error(error.message);
-
-		return purchasers;
-	};
-
-	const purchasersCache = useQuery({
-		queryKey: ["purchasers"],
-		queryFn: readPurchasers,
-		initialData: initialPurchasers,
-	});
 
 	const renderMemberLi = (
 		purchaser:
@@ -275,6 +274,20 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 	const [clientPurchasersDialogIsOpen, setClientPurchasersDialogIsOpen] =
 		useState(false);
 
+	const purchasersCache = useQuery({
+		queryKey: ["purchasers"],
+		queryFn: async () => {
+			const { data: purchasers, error } = await supabase
+				.from("purchasers")
+				.select("id, name")
+				.order("created_at", { ascending: true });
+			if (error) throw new Error(error.message);
+
+			return purchasers;
+		},
+		initialData: initialPurchasers,
+	});
+
 	const createPurchaseWithPurchasers = createPurchase.bind(
 		null,
 		initialPurchasers.map((x) => x.id),
@@ -324,22 +337,6 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 				amountPaidSum / purchasersCache.data.length,
 			);
 	};
-
-	const readPurchasers = async () => {
-		const { data: purchasers, error } = await supabase
-			.from("purchasers")
-			.select("id, name")
-			.order("created_at", { ascending: true });
-		if (error) throw new Error(error.message);
-
-		return purchasers;
-	};
-
-	const purchasersCache = useQuery({
-		queryKey: ["purchasers"],
-		queryFn: readPurchasers,
-		initialData: initialPurchasers,
-	});
 
 	useEffect(() => {
 		form.errors && alert(form.errors);
