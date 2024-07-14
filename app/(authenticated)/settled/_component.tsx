@@ -1,22 +1,17 @@
 "use client";
 
+import ErrorMessage from "@/components/ErrorMessage";
+import NodataMessage from "@/components/NodataMessage";
+import Loader from "@/components/clients/Loader";
 import { createClient } from "@/utils/supabase/client";
-import { useCallback, useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 export const Table = () => {
 	const supabase = createClient();
+	const queryClient = useQueryClient();
 
-	const [purchases, setPurchases] = useState<
-		| {
-				id: number;
-				title: string;
-				date?: string;
-				totalAmount: number;
-		  }[]
-		| undefined
-	>();
-
-	const readPurchases = useCallback(async () => {
+	const readPurchases = async () => {
 		const { data: purchasesData, error: purchasesError } = await supabase
 			.from("purchases")
 			.select(
@@ -30,12 +25,16 @@ export const Table = () => {
 			)
 			.eq("is_settled", true)
 			.order("created_at", { ascending: true });
-		if (purchasesError) {
-			console.error(purchasesError);
-			return;
-		}
-		setPurchases(
-			purchasesData.map((x) => ({
+		if (purchasesError) throw new Error(purchasesError.message);
+
+		return purchasesData;
+	};
+
+	const purchasesCache = useQuery({
+		queryKey: ["purchases", "settled"],
+		queryFn: readPurchases,
+		select: (data) =>
+			data.map((x) => ({
 				id: x.id,
 				title: x.title,
 				date: x.purchase_date ?? undefined,
@@ -44,8 +43,7 @@ export const Table = () => {
 					0,
 				),
 			})),
-		);
-	}, [supabase]);
+	});
 
 	const deletePurchase = async (purchaseId: number) => {
 		const { error } = await supabase
@@ -53,7 +51,7 @@ export const Table = () => {
 			.delete()
 			.eq("id", purchaseId);
 		if (error) console.error(error);
-		readPurchases();
+		queryClient.invalidateQueries({ queryKey: ["purchases"] });
 	};
 
 	const unsettlePurchase = async (purchaseId: number) => {
@@ -63,56 +61,63 @@ export const Table = () => {
 			.eq("id", purchaseId)
 			.select();
 		if (error) console.error(error);
-		readPurchases();
+		queryClient.invalidateQueries({ queryKey: ["purchases"] });
 	};
 
 	useEffect(() => {
-		readPurchases();
-	}, [readPurchases]);
+		queryClient.invalidateQueries({ queryKey: ["purchases", "settled"] });
+	}, [queryClient]);
 
 	return (
 		<>
-			<p>削除後リロードしないと反映されません</p>
-			<table>
-				<thead>
-					<tr>
-						<th>購入品名</th>
-						<th>購入日</th>
-						<th>合計金額</th>
-						<th>未精算</th>
-						<th>削除</th>
-					</tr>
-				</thead>
-				<tbody>
-					{purchases?.map((x) => (
-						<tr key={x.id}>
-							<td>{x.title}</td>
-							<td>{x.date}</td>
-							<td>{x.totalAmount}</td>
-							<td>
-								<button
-									type="button"
-									onClick={() => {
-										unsettlePurchase(x.id);
-									}}
-								>
-									未精算
-								</button>
-							</td>
-							<td>
-								<button
-									type="button"
-									onClick={() => {
-										deletePurchase(x.id);
-									}}
-								>
-									削除
-								</button>
-							</td>
+			{purchasesCache.status === "error" ? (
+				<ErrorMessage />
+			) : purchasesCache.status === "pending" ? (
+				<Loader isLoading />
+			) : purchasesCache.data.length === 0 ? (
+				<NodataMessage />
+			) : (
+				<table>
+					<thead>
+						<tr>
+							<th>購入品名</th>
+							<th>購入日</th>
+							<th>合計金額</th>
+							<th>未精算</th>
+							<th>削除</th>
 						</tr>
-					))}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{purchasesCache.data.map((x) => (
+							<tr key={x.id}>
+								<td>{x.title}</td>
+								<td>{x.date}</td>
+								<td>{x.totalAmount}</td>
+								<td>
+									<button
+										type="button"
+										onClick={() => {
+											unsettlePurchase(x.id);
+										}}
+									>
+										未精算
+									</button>
+								</td>
+								<td>
+									<button
+										type="button"
+										onClick={() => {
+											deletePurchase(x.id);
+										}}
+									>
+										削除
+									</button>
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			)}
 		</>
 	);
 };

@@ -6,7 +6,7 @@ import { useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { mdiAccountMinus, mdiAccountPlus, mdiClose } from "@mdi/js";
 import Icon from "@mdi/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	type ForwardedRef,
 	forwardRef,
@@ -270,6 +270,7 @@ type ClientFormProps = {
 
 export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 	const supabase = createClient();
+	const queryClient = useQueryClient();
 
 	const [clientPurchasersDialogIsOpen, setClientPurchasersDialogIsOpen] =
 		useState(false);
@@ -465,8 +466,12 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 					isOpen={clientPurchasersDialogIsOpen}
 					onClose={() => setClientPurchasersDialogIsOpen(false)}
 					initialPurchasers={purchasersCache.data}
-					onCreate={readPurchasers}
-					onDelete={readPurchasers}
+					onCreate={() => {
+						queryClient.invalidateQueries({ queryKey: ["purchasers"] });
+					}}
+					onDelete={() => {
+						queryClient.invalidateQueries({ queryKey: ["purchasers"] });
+					}}
 				/>
 			</form>
 		</>

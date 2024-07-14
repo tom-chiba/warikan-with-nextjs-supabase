@@ -1,8 +1,11 @@
 "use client";
 
+import ErrorMessage from "@/components/ErrorMessage";
+import NodataMessage from "@/components/NodataMessage";
+import Loader from "@/components/clients/Loader";
 import { createClient } from "@/utils/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
 type TableProps = {
 	selectedPurchaseIds: number[];
@@ -11,6 +14,7 @@ type TableProps = {
 
 const Table = ({ selectedPurchaseIds, onSelectPurchase }: TableProps) => {
 	const supabase = createClient();
+	const queryClient = useQueryClient();
 
 	const readPurchases = async () => {
 		const { data: purchasesData, error: purchasesError } = await supabase
@@ -26,15 +30,13 @@ const Table = ({ selectedPurchaseIds, onSelectPurchase }: TableProps) => {
 			)
 			.eq("is_settled", false)
 			.order("created_at", { ascending: true });
-		if (purchasesError) {
-			console.error(purchasesError);
-			return;
-		}
+		if (purchasesError) throw new Error(purchasesError.message);
+
 		return purchasesData;
 	};
 
 	const purchasesCache = useQuery({
-		queryKey: ["purchases"],
+		queryKey: ["purchases", "unsettled"],
 		queryFn: readPurchases,
 		select: (data) =>
 			data?.map((x) => ({
@@ -54,7 +56,7 @@ const Table = ({ selectedPurchaseIds, onSelectPurchase }: TableProps) => {
 			.delete()
 			.eq("id", purchaseId);
 		if (error) console.error(error);
-		purchasesCache.refetch();
+		queryClient.invalidateQueries({ queryKey: ["purchases"] });
 	};
 
 	const settlePurchase = async (purchaseId: number) => {
@@ -64,59 +66,71 @@ const Table = ({ selectedPurchaseIds, onSelectPurchase }: TableProps) => {
 			.eq("id", purchaseId)
 			.select();
 		if (error) console.error(error);
-		purchasesCache.refetch();
+		queryClient.invalidateQueries({ queryKey: ["purchases"] });
 	};
+
+	useEffect(() => {
+		queryClient.invalidateQueries({ queryKey: ["purchases", "unsettled"] });
+	}, [queryClient]);
 
 	return (
 		<>
-			<table>
-				<thead>
-					<tr>
-						<th />
-						<th>購入品名</th>
-						<th>購入日</th>
-						<th>合計金額</th>
-						<th>精算</th>
-						<th>削除</th>
-					</tr>
-				</thead>
-				<tbody>
-					{purchasesCache.data?.map((x) => (
-						<tr key={x.id}>
-							<td>
-								<input
-									type="checkbox"
-									checked={selectedPurchaseIds.includes(x.id)}
-									onChange={() => onSelectPurchase(x.id)}
-								/>
-							</td>
-							<td>{x.title}</td>
-							<td>{x.date}</td>
-							<td>{x.totalAmount}</td>
-							<td>
-								<button
-									type="button"
-									onClick={() => {
-										settlePurchase(x.id);
-									}}
-								>
-									精算
-								</button>
-							</td>
-							<td>
-								<button
-									type="button"
-									onClick={() => {
-										deletePurchase(x.id);
-									}}
-								>
-									削除
-								</button>
-							</td>
+			{purchasesCache.status === "error" ? (
+				<ErrorMessage />
+			) : purchasesCache.status === "pending" ? (
+				<Loader isLoading />
+			) : purchasesCache.data.length === 0 ? (
+				<NodataMessage />
+			) : (
+				<table>
+					<thead>
+						<tr>
+							<th />
+							<th>購入品名</th>
+							<th>購入日</th>
+							<th>合計金額</th>
+							<th>精算</th>
+							<th>削除</th>
 						</tr>
-					))}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{purchasesCache.data?.map((x) => (
+							<tr key={x.id}>
+								<td>
+									<input
+										type="checkbox"
+										checked={selectedPurchaseIds.includes(x.id)}
+										onChange={() => onSelectPurchase(x.id)}
+									/>
+								</td>
+								<td>{x.title}</td>
+								<td>{x.date}</td>
+								<td>{x.totalAmount}</td>
+								<td>
+									<button
+										type="button"
+										onClick={() => {
+											settlePurchase(x.id);
+										}}
+									>
+										精算
+									</button>
+								</td>
+								<td>
+									<button
+										type="button"
+										onClick={() => {
+											deletePurchase(x.id);
+										}}
+									>
+										削除
+									</button>
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			)}
 		</>
 	);
 };
