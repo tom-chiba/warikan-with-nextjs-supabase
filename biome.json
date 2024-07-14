@@ -3,6 +3,9 @@
 	"organizeImports": {
 		"enabled": true
 	},
+	"formatter": {
+		"lineEnding": "crlf"
+	},
 	"linter": {
 		"enabled": true,
 		"rules": {
@@ -10,6 +13,7 @@
 		}
 	},
 	"files": {
-		"ignore": [".next/**/*", "node_modules/**/*"]
+		"ignore": [".next/**/*", "node_modules/**/*"],
+		"include": ["app/**/*"]
 	}
 }

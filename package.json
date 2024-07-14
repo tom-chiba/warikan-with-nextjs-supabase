@@ -3,7 +3,10 @@
 	"scripts": {
 		"dev": "next dev",
 		"build": "next build",
-		"start": "next start"
+		"start": "next start",
+		"tsc": "tsc",
+		"biome:check": "biome check .",
+		"check": "run-s tsc biome:check"
 	},
 	"dependencies": {
 		"@biomejs/biome": "^1.6.1",
