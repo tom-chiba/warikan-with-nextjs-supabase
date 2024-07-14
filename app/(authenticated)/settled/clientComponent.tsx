@@ -76,9 +76,13 @@ export const Table = () => {
 
 	return (
 		<>
-			{purchasesCache.status === "error" ? (
+			{purchasesCache.status === "error" ||
+			deletePurchaseMutation.status === "error" ||
+			unsettlePurchaseMutation.status === "error" ? (
 				<ErrorMessage />
-			) : purchasesCache.status === "pending" ? (
+			) : purchasesCache.status === "pending" ||
+			  deletePurchaseMutation.status === "pending" ||
+			  unsettlePurchaseMutation.status === "pending" ? (
 				<Loader isLoading />
 			) : purchasesCache.data.length === 0 ? (
 				<NodataMessage />

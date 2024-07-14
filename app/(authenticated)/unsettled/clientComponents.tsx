@@ -81,9 +81,13 @@ const Table = ({ selectedPurchaseIds, onSelectPurchase }: TableProps) => {
 
 	return (
 		<>
-			{purchasesCache.status === "error" ? (
+			{purchasesCache.status === "error" ||
+			deletePurchaseMutation.status === "error" ||
+			settlePurchaseMutation.status === "error" ? (
 				<ErrorMessage />
-			) : purchasesCache.status === "pending" ? (
+			) : purchasesCache.status === "pending" ||
+			  deletePurchaseMutation.status === "pending" ||
+			  settlePurchaseMutation.status === "pending" ? (
 				<Loader isLoading />
 			) : purchasesCache.data.length === 0 ? (
 				<NodataMessage />
