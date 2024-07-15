@@ -75,12 +75,13 @@ const ClientPurchasersDialog = ({
 	const [inputPurchaserName, setInputPurchaserName] = useState<
 		string | undefined
 	>();
-	const [tempPurchasers, setTempPurchasers] = useState<
-		{
-			id: string;
-			name: string;
-		}[]
-	>([]);
+	const [tempPurchasersToCreate, setTempPurchasersToCreate] = useState<
+		| {
+				id: string;
+				name: string;
+		  }[]
+		| undefined
+	>();
 	const [purchasersIdToDelete, setPurchasersIdToDelete] = useState<
 		(number | string)[] | undefined
 	>();
@@ -101,20 +102,25 @@ const ClientPurchasersDialog = ({
 
 	const createPurchaserMutation = useMutation({
 		mutationFn: async () => {
-			if (!tempPurchasers.length) return;
+			if (!tempPurchasersToCreate?.length) return;
 
 			const { error } = await supabase
 				.from("purchasers")
-				.insert(tempPurchasers.map((purchaser) => ({ name: purchaser.name })))
+				.insert(
+					tempPurchasersToCreate.map((purchaser) => ({ name: purchaser.name })),
+				)
 				.select();
 			if (error) throw new Error(error.message);
 		},
-		onSuccess: onCreate,
+		onSuccess: () => {
+			onCreate();
+			setTempPurchasersToCreate(undefined);
+		},
 	});
 
 	const deletePurchasersMutation = useMutation({
 		mutationFn: async () => {
-			if (!purchasersIdToDelete) return;
+			if (!purchasersIdToDelete?.length) return;
 
 			const { error } = await supabase
 				.from("purchasers")
@@ -122,7 +128,10 @@ const ClientPurchasersDialog = ({
 				.in("id", purchasersIdToDelete);
 			if (error) throw new Error(error.message);
 		},
-		onSuccess: onDelete,
+		onSuccess: () => {
+			onDelete();
+			setPurchasersIdToDelete(undefined);
+		},
 	});
 
 	const MemberLi = ({
@@ -223,7 +232,7 @@ const ClientPurchasersDialog = ({
 					{purchasersCache.data.map((purchaser) => (
 						<MemberLi key={purchaser.id} purchaser={purchaser} />
 					))}
-					{tempPurchasers.map((purchaser) => (
+					{tempPurchasersToCreate?.map((purchaser) => (
 						<MemberLi key={purchaser.id} purchaser={purchaser} />
 					))}
 					{inputPurchaserName !== undefined && (
@@ -255,11 +264,10 @@ const ClientPurchasersDialog = ({
 								]);
 								queryClient.invalidateQueries({ queryKey: ["purchasers"] });
 							})();
-							setTempPurchasers([]);
 						}
 						if (inputPurchaserName) {
-							setTempPurchasers((prev) => [
-								...prev,
+							setTempPurchasersToCreate((prev) => [
+								...(prev ?? []),
 								{ id: new Date().toString(), name: inputPurchaserName },
 							]);
 						}
