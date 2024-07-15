@@ -379,6 +379,10 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 		});
 	}, [fields.purchasers, form, purchasersCache.data]);
 
+	useEffect(() => {
+		console.log(lastResult?.status);
+	}, [lastResult?.status]);
+
 	return (
 		<>
 			<form id={form.id} action={action} onSubmit={form.onSubmit} noValidate>
