@@ -39,6 +39,7 @@ export const createPurchase = async (
 		});
 	}
 
+	console.dir(purchaserIds);
 	const { error } = await supabase
 		.from("purchasers_purchases")
 		.insert(

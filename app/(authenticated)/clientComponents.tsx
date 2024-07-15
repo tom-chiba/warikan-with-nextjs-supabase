@@ -311,7 +311,7 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 
 	const createPurchaseWithPurchasers = createPurchase.bind(
 		null,
-		initialPurchasers.map((x) => x.id),
+		purchasersCache.data.map((x) => x.id),
 	);
 
 	const [lastResult, action] = useFormState(
