@@ -9,7 +9,7 @@ export const ServerForm = async () => {
 		.select("id, name")
 		.order("created_at", { ascending: true });
 
-	if (error) return <span>error</span>;
+	if (error) throw new Error(error.message);
 
 	if (!purchasers) return <span>nodata</span>;
 
