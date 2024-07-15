@@ -125,14 +125,16 @@ const ClientPurchasersDialog = ({
 		onSuccess: onDelete,
 	});
 
-	const renderMemberLi = (
+	const MemberLi = ({
+		purchaser,
+	}: {
 		purchaser:
 			| {
 					id: number;
 					name: string;
 			  }
-			| { id: string; name: string },
-	) => (
+			| { id: string; name: string };
+	}) => (
 		<li
 			className={`border-b-2 border-gray-300 py-2 flex justify-between${
 				purchasersIdToDelete?.some((x) => x === purchaser.id)
@@ -218,8 +220,12 @@ const ClientPurchasersDialog = ({
 			</header>
 			<div className="py-4">
 				<ul>
-					{purchasersCache.data.map((purchaser) => renderMemberLi(purchaser))}
-					{tempPurchasers.map((purchaser) => renderMemberLi(purchaser))}
+					{purchasersCache.data.map((purchaser) => (
+						<MemberLi key={purchaser.id} purchaser={purchaser} />
+					))}
+					{tempPurchasers.map((purchaser) => (
+						<MemberLi key={purchaser.id} purchaser={purchaser} />
+					))}
 					{inputPurchaserName !== undefined && (
 						<li className="border-b-2 border-gray-300 py-2">
 							<div className="bg-blue-50 flex justify-between px-1">
