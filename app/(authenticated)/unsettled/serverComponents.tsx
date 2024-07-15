@@ -1,3 +1,4 @@
+import NodataMessage from "@/components/NodataMessage";
 import { createClient } from "@/utils/supabase/server";
 import { ClientUnsettledBlock } from "./clientComponents";
 
@@ -8,10 +9,9 @@ export const ServerUnsettledBlock = async () => {
 		.from("purchasers")
 		.select("id, name")
 		.order("created_at", { ascending: true });
-
 	if (error) throw new Error(error.message);
 
-	if (!purchasers) return <span>nodata</span>;
+	if (!purchasers) return <NodataMessage />;
 
 	return <ClientUnsettledBlock initialPurchasers={purchasers} />;
 };
