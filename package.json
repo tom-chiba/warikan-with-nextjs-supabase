@@ -9,9 +9,8 @@
 		"check": "run-s tsc biome:check"
 	},
 	"dependencies": {
-		"@biomejs/biome": "^1.6.1",
-		"@conform-to/react": "^1.0.4",
-		"@conform-to/zod": "^1.0.4",
+		"@conform-to/react": "^1.1.5",
+		"@conform-to/zod": "^1.1.5",
 		"@hookform/resolvers": "^3.3.4",
 		"@mdi/js": "^7.4.47",
 		"@mdi/react": "^1.6.1",
@@ -31,6 +30,7 @@
 		"zod": "^3.22.4"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "1.8.3",
 		"@types/node": "20.11.5",
 		"@types/react": "18.2.48",
 		"@types/react-dom": "18.2.18",
