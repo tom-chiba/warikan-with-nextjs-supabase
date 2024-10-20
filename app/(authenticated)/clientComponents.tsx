@@ -4,6 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import {
 	Form,
 	FormControl,
 	FormField,
@@ -19,15 +28,23 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableFooter,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { mdiAccountMinus, mdiAccountPlus, mdiClose } from "@mdi/js";
-import Icon from "@mdi/react";
+import {} from "@mdi/js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { CalendarIcon, Check, Edit, Trash, X } from "lucide-react";
+import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -36,36 +53,16 @@ type ClientPurchasersDialogProps = {
 		id: number;
 		name: string;
 	}[];
-	isOpen: boolean;
-	onClose: () => void;
-	onCreate: () => void;
-	onDelete: () => void;
 };
-
 const ClientPurchasersDialog = ({
 	initialPurchasers,
-	isOpen,
-	onClose,
-	onCreate,
-	onDelete,
 }: ClientPurchasersDialogProps) => {
 	const supabase = createClient();
 	const queryClient = useQueryClient();
 
-	const dialogRef = useRef<HTMLDialogElement>(null);
-	const [inputPurchaserName, setInputPurchaserName] = useState<
-		string | undefined
-	>();
-	const [tempPurchasersToCreate, setTempPurchasersToCreate] = useState<
-		| {
-				id: string;
-				name: string;
-		  }[]
-		| undefined
-	>();
-	const [purchasersIdToDelete, setPurchasersIdToDelete] = useState<
-		(number | string)[] | undefined
-	>();
+	const [inputPurchaser, setInputPurchaser] = useState<
+		{ id: number | undefined; name: string } | undefined
+	>(undefined);
 
 	const purchasersCache = useQuery({
 		queryKey: ["purchasers"],
@@ -82,183 +79,222 @@ const ClientPurchasersDialog = ({
 	});
 
 	const createPurchaserMutation = useMutation({
-		mutationFn: async () => {
-			if (!tempPurchasersToCreate?.length) return;
-
+		mutationFn: async (name: string) => {
 			const { error } = await supabase
 				.from("purchasers")
-				.insert(
-					tempPurchasersToCreate.map((purchaser) => ({ name: purchaser.name })),
-				)
+				.insert({ name })
 				.select();
 			if (error) throw new Error(error.message);
 		},
 		onSuccess: () => {
-			onCreate();
-			setTempPurchasersToCreate(undefined);
+			queryClient.invalidateQueries({ queryKey: ["purchasers"] });
 		},
 	});
 
-	const deletePurchasersMutation = useMutation({
-		mutationFn: async () => {
-			if (!purchasersIdToDelete?.length) return;
-
-			const { error } = await supabase
+	const updatePurchaserMutation = useMutation({
+		mutationFn: async ({ id, newName }: { id: number; newName: string }) => {
+			const { data, error } = await supabase
 				.from("purchasers")
-				.delete()
-				.in("id", purchasersIdToDelete);
+				.update({ name: newName })
+				.eq("id", id)
+				.select();
 			if (error) throw new Error(error.message);
 		},
 		onSuccess: () => {
-			onDelete();
-			setPurchasersIdToDelete(undefined);
+			queryClient.invalidateQueries({ queryKey: ["purchasers"] });
 		},
 	});
 
-	const MemberLi = ({
-		purchaser,
-	}: {
-		purchaser:
-			| {
-					id: number;
-					name: string;
-			  }
-			| { id: string; name: string };
-	}) => (
-		<li
-			className={`border-b-2 border-gray-300 py-2 flex justify-between${
-				purchasersIdToDelete?.some((x) => x === purchaser.id)
-					? " text-red-500"
-					: ""
-			}`}
-			key={purchaser.id}
-		>
-			<div className="truncate">{purchaser.name}</div>
-			{(() => {
-				if (!purchasersIdToDelete) return null;
-				if (purchasersIdToDelete.some((x) => x === purchaser.id))
-					return (
-						<button
-							type="button"
-							className="flex gap-1"
-							onClick={() =>
-								setPurchasersIdToDelete((prev) => {
-									if (!prev) throw new Error();
-									return prev.filter((x) => x !== purchaser.id);
-								})
-							}
-						>
-							<Icon path={mdiClose} size={1} />
-							キャンセル
-						</button>
-					);
-				return (
-					<button
-						type="button"
-						className="flex gap-1"
-						onClick={() =>
-							setPurchasersIdToDelete((prev) =>
-								prev ? [...prev, purchaser.id] : [purchaser.id],
-							)
-						}
-					>
-						<Icon path={mdiClose} size={1} />
-						削除
-					</button>
-				);
-			})()}
-		</li>
-	);
+	const deletePurchaserMutation = useMutation({
+		mutationFn: async (id: number) => {
+			const { error } = await supabase.from("purchasers").delete().eq("id", id);
+			if (error) throw new Error(error.message);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["purchasers"] });
+		},
+	});
 
-	useEffect(() => {
-		if (isOpen) {
-			dialogRef.current?.showModal();
-			return;
+	const endEditingPurchaserName = (mode: "create" | "update") => {
+		if (!inputPurchaser) return;
+		if (!inputPurchaser.name) return;
+		switch (mode) {
+			case "create": {
+				createPurchaserMutation.mutate(inputPurchaser.name);
+				break;
+			}
+			case "update": {
+				if (!inputPurchaser.id) return;
+				updatePurchaserMutation.mutate({
+					id: inputPurchaser.id,
+					newName: inputPurchaser.name,
+				});
+				break;
+			}
 		}
-		dialogRef.current?.close();
-	}, [isOpen]);
+		setInputPurchaser(undefined);
+	};
 
 	return (
-		<dialog className="px-4 py-2" ref={dialogRef} onClose={onClose}>
-			<header className="flex items-center justify-between gap-1 ">
-				<h1>メンバー管理</h1>
-				<div className="flex gap-1">
-					<button
-						className="border px-1 bg-gray-200"
-						type="button"
-						onClick={() => {
-							setPurchasersIdToDelete(undefined);
-							setInputPurchaserName((prev) => {
-								if (prev === undefined) return "";
-								return undefined;
-							});
-						}}
-					>
-						<Icon path={mdiAccountPlus} size={1} />
-					</button>
-					<button
-						className="border px-1 bg-gray-200"
-						type="button"
-						onClick={() => {
-							setInputPurchaserName(undefined);
-							setPurchasersIdToDelete((prev) => (prev ? undefined : []));
-						}}
-					>
-						<Icon path={mdiAccountMinus} size={1} />
-					</button>
-				</div>
-			</header>
-			<div className="py-4">
-				<ul>
-					{purchasersCache.data.map((purchaser) => (
-						<MemberLi key={purchaser.id} purchaser={purchaser} />
-					))}
-					{tempPurchasersToCreate?.map((purchaser) => (
-						<MemberLi key={purchaser.id} purchaser={purchaser} />
-					))}
-					{inputPurchaserName !== undefined && (
-						<li className="border-b-2 border-gray-300 py-2">
-							<div className="bg-blue-50 flex justify-between px-1">
-								<input
-									type="text"
-									className="bg-transparent flex-1 focus-visible:outline-none"
-									value={inputPurchaserName}
-									onChange={(e) => setInputPurchaserName(e.target.value)}
-								/>
-								<Icon path={mdiClose} size={1} className="text-gray-400" />
-							</div>
-						</li>
-					)}
-				</ul>
-			</div>
-			<footer className="text-center">
-				<button
-					className="bg-gray-200 px-3 shadow"
-					type="button"
-					onClick={() => {
-						if (inputPurchaserName === undefined) {
-							dialogRef.current?.close();
-							(async () => {
-								await Promise.all([
-									createPurchaserMutation.mutate(),
-									deletePurchasersMutation.mutate(),
-								]);
-								queryClient.invalidateQueries({ queryKey: ["purchasers"] });
-							})();
-						}
-						if (inputPurchaserName) {
-							setTempPurchasersToCreate((prev) => [
-								...(prev ?? []),
-								{ id: new Date().toString(), name: inputPurchaserName },
-							]);
-						}
-						setInputPurchaserName(undefined);
-					}}
-				>
-					完了
-				</button>
-			</footer>
-		</dialog>
+		<Dialog>
+			<DialogTrigger asChild>
+				<Button variant="outline">メンバー管理</Button>
+			</DialogTrigger>
+			<DialogContent className="sm:max-w-[425px]">
+				<DialogHeader>
+					<DialogTitle>メンバー管理</DialogTitle>
+				</DialogHeader>
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead className="w-[200px]">名前</TableHead>
+							<TableHead className="w-[20px]" />
+							<TableHead className="w-[20px]" />
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{purchasersCache.data.map((purchaser) => (
+							<TableRow key={purchaser.name}>
+								<TableCell className="font-medium">
+									{inputPurchaser?.id === purchaser.id ? (
+										<Input
+											value={inputPurchaser.name}
+											onChange={(e) =>
+												setInputPurchaser((prev) => {
+													if (!prev) return prev;
+													return {
+														...prev,
+														name: e.target.value,
+													};
+												})
+											}
+											onKeyDown={(e) => {
+												if (e.key === "Enter")
+													endEditingPurchaserName("update");
+											}}
+										/>
+									) : (
+										<>{purchaser.name}</>
+									)}
+								</TableCell>
+
+								<TableCell>
+									{inputPurchaser?.id === purchaser.id ? (
+										<Button
+											size="icon"
+											onClick={() => endEditingPurchaserName("update")}
+											disabled={!inputPurchaser.name}
+										>
+											<Check className="h-4 w-4" />
+										</Button>
+									) : (
+										<Button
+											variant="outline"
+											size="icon"
+											onClick={() =>
+												setInputPurchaser({
+													id: purchaser.id,
+													name: purchaser.name,
+												})
+											}
+											disabled={inputPurchaser !== undefined}
+										>
+											<Edit className="h-4 w-4" />
+										</Button>
+									)}
+								</TableCell>
+
+								<TableCell>
+									{inputPurchaser?.id === purchaser.id ? (
+										<Button
+											variant="outline"
+											size="icon"
+											onClick={() => setInputPurchaser(undefined)}
+										>
+											<X className="h-4 w-4" />
+										</Button>
+									) : (
+										<Button
+											size="icon"
+											onClick={() =>
+												deletePurchaserMutation.mutate(purchaser.id)
+											}
+											disabled={inputPurchaser !== undefined}
+										>
+											<Trash className="h-4 w-4" />
+										</Button>
+									)}
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+					<TableFooter>
+						<TableRow>
+							{inputPurchaser && inputPurchaser.id === undefined ? (
+								<>
+									<TableCell>
+										<Input
+											value={inputPurchaser?.name}
+											onChange={(e) =>
+												setInputPurchaser((prev) => {
+													if (!prev) return prev;
+													return { ...prev, name: e.target.value };
+												})
+											}
+											onKeyDown={(e) => {
+												if (e.key === "Enter")
+													endEditingPurchaserName("create");
+											}}
+										/>
+									</TableCell>
+									<TableCell>
+										<Button
+											size="icon"
+											onClick={() => endEditingPurchaserName("create")}
+											disabled={!inputPurchaser.name}
+										>
+											<Check className="h-4 w-4" />
+										</Button>
+									</TableCell>
+									<TableCell>
+										<Button
+											variant="outline"
+											size="icon"
+											onClick={() => setInputPurchaser(undefined)}
+										>
+											<X className="h-4 w-4" />
+										</Button>
+									</TableCell>
+								</>
+							) : (
+								<TableCell>
+									<Button
+										variant="outline"
+										onClick={() =>
+											setInputPurchaser({ id: undefined, name: "" })
+										}
+										disabled={inputPurchaser !== undefined}
+									>
+										追加
+									</Button>
+								</TableCell>
+							)}
+						</TableRow>
+					</TableFooter>
+				</Table>
+				<DialogFooter>
+					<DialogClose asChild>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setInputPurchaser(undefined)}
+						>
+							閉じる
+						</Button>
+					</DialogClose>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 };
 
@@ -299,10 +335,6 @@ const purchaseSchema = z.object({
 
 export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 	const supabase = createClient();
-	const queryClient = useQueryClient();
-
-	const [clientPurchasersDialogIsOpen, setClientPurchasersDialogIsOpen] =
-		useState(false);
 	const [equallyDivideCheckIsChecked, setEquallyDivideCheckIsChecked] =
 		useState(false);
 
@@ -501,9 +533,7 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 					)}
 				/>
 
-				<Button onClick={() => setClientPurchasersDialogIsOpen(true)}>
-					メンバー管理
-				</Button>
+				<ClientPurchasersDialog initialPurchasers={purchasersCache.data} />
 
 				{purchaserNames.status === "error" ? (
 					<p>error</p>
@@ -639,18 +669,6 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 				)}
 
 				<Button type="submit">追加</Button>
-
-				<ClientPurchasersDialog
-					isOpen={clientPurchasersDialogIsOpen}
-					onClose={() => setClientPurchasersDialogIsOpen(false)}
-					initialPurchasers={purchasersCache.data}
-					onCreate={() => {
-						queryClient.invalidateQueries({ queryKey: ["purchasers"] });
-					}}
-					onDelete={() => {
-						queryClient.invalidateQueries({ queryKey: ["purchasers"] });
-					}}
-				/>
 			</form>
 		</Form>
 	);
