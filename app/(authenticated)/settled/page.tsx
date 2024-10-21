@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { Table } from "./clientComponent";
+import { ServerSettledTable } from "./serverComponents";
 
 export default function Settled() {
 	return (
@@ -17,7 +17,7 @@ export default function Settled() {
 				</TabsTrigger>
 			</TabsList>
 			<TabsContent value="settled">
-				<Table />
+				<ServerSettledTable />
 			</TabsContent>
 		</Tabs>
 	);
