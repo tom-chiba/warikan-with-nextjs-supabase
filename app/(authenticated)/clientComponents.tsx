@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
+import type { UseQueryDataAndStatus } from "@/utils/supabase/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {} from "@mdi/js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -333,18 +334,15 @@ const purchaseSchema = z.object({
 	),
 });
 
-export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
+export const usePurchaseForm = (
+	initialPurchasers: ClientFormProps["initialPurchasers"],
+	purchaseIdForUpdate?: number,
+	formDefaultValues?: Required<
+		Parameters<typeof useForm<z.infer<typeof purchaseSchema>>>
+	>[0]["defaultValues"],
+) => {
 	const supabase = createClient();
-	const [equallyDivideCheckIsChecked, setEquallyDivideCheckIsChecked] =
-		useState(false);
-
-	type DistributivePick<T, K extends keyof T> = T extends unknown
-		? Pick<T, K>
-		: never;
-	type UseQueryDataAndStatus<T> = DistributivePick<
-		ReturnType<typeof useQuery<T>>,
-		"data" | "status" | "isRefetching"
-	>;
+	const queryClient = useQueryClient();
 
 	const purchasersCache = useQuery({
 		queryKey: ["purchasers"],
@@ -359,7 +357,7 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 		},
 		initialData: initialPurchasers,
 	});
-	const createPurchase = useMutation({
+	const createPurchaseMutation = useMutation({
 		mutationFn: async ({
 			title,
 			date,
@@ -405,6 +403,57 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 		onSuccess: () => form.reset(),
 		throwOnError: true,
 	});
+	const updatePurchaseMutation = useMutation({
+		mutationFn: async ({
+			title,
+			date,
+			note,
+			purchasersAmountPaid,
+			purchasersAmountToPay,
+		}: z.infer<typeof purchaseSchema>) => {
+			if (!purchaseIdForUpdate) return;
+
+			const { data: purchaseData, error: purchaseError } = await supabase
+				.from("purchases")
+				.update({
+					title: title,
+					purchase_date: date?.toLocaleDateString("sv-SE") || null,
+					note: note ?? "",
+				})
+				.eq("id", purchaseIdForUpdate)
+				.select();
+			if (purchaseError) throw new Error(purchaseError.message);
+
+			const updatedPurchaseData = purchaseData[0];
+
+			for (const [i, x] of purchasersAmountPaid.entries()) {
+				const { error: purchasersPurchasesError } = await supabase
+					.from("purchasers_purchases")
+					.update({
+						amount_paid: typeof x.amountPaid === "number" ? x.amountPaid : null,
+						amount_to_pay:
+							typeof purchasersAmountToPay[i].amountToPay === "number"
+								? purchasersAmountToPay[i].amountToPay
+								: null,
+					})
+					.eq("purchase_id", purchaseIdForUpdate)
+					.eq("purchaser_id", purchasersCache.data[i].id)
+					.select();
+
+				// TODO: トランザクション処理
+				if (purchasersPurchasesError)
+					throw new Error(
+						`処理に失敗しました。purchases tableからid=${updatedPurchaseData.id}に紐づく行を削除してください。`,
+					);
+			}
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["purchases", "unsettled"],
+			});
+		},
+		throwOnError: true,
+	});
 
 	const purchaserNames: UseQueryDataAndStatus<string[]> =
 		purchasersCache.status !== "success"
@@ -421,7 +470,7 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 
 	const form = useForm<z.infer<typeof purchaseSchema>>({
 		resolver: zodResolver(purchaseSchema),
-		defaultValues: {
+		defaultValues: formDefaultValues ?? {
 			title: "",
 			date: new Date(),
 			note: "",
@@ -444,8 +493,11 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 		name: "purchasersAmountToPay",
 	});
 
-	const handleSubmit = (values: z.infer<typeof purchaseSchema>) => {
-		createPurchase.mutate(values);
+	const handleSubmitCreate = (values: z.infer<typeof purchaseSchema>) => {
+		createPurchaseMutation.mutate(values);
+	};
+	const handleSubmitUpdate = (values: z.infer<typeof purchaseSchema>) => {
+		updatePurchaseMutation.mutate(values);
 	};
 
 	const calculateAmountToPay = (amountPaidSum: number) => {
@@ -460,9 +512,40 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 
 	const watchedPurchasersAmountPaid = form.watch("purchasersAmountPaid");
 
+	return {
+		purchasersCache,
+		purchaserNames,
+		form,
+		purchasersAmountPaidFields,
+		purchasersAmountToPayFields,
+		handleSubmitCreate,
+		handleSubmitUpdate,
+		calculateAmountToPay,
+		watchedPurchasersAmountPaid,
+	};
+};
+
+export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
+	const [equallyDivideCheckIsChecked, setEquallyDivideCheckIsChecked] =
+		useState(false);
+
+	const {
+		purchasersCache,
+		purchaserNames,
+		form,
+		purchasersAmountPaidFields,
+		purchasersAmountToPayFields,
+		handleSubmitCreate,
+		calculateAmountToPay,
+		watchedPurchasersAmountPaid,
+	} = usePurchaseForm(initialPurchasers);
+
 	return (
 		<Form {...form}>
-			<form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+			<form
+				onSubmit={form.handleSubmit(handleSubmitCreate)}
+				className="space-y-8"
+			>
 				<FormField
 					control={form.control}
 					name="title"

@@ -3,16 +3,397 @@
 import ErrorMessage from "@/components/ErrorMessage";
 import NodataMessage from "@/components/NodataMessage";
 import Loader from "@/components/clients/Loader";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+	Card,
+	CardContent,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
+import type { UseQueryDataAndStatus } from "@/utils/supabase/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { format } from "date-fns";
+import { CalendarIcon, Ellipsis } from "lucide-react";
+import { type ComponentProps, useEffect, useState } from "react";
+import { usePurchaseForm } from "../clientComponents";
 
-type TableProps = {
-	selectedPurchaseIds: number[];
-	onSelectPurchase: (targetId: number) => void;
+type ControlMenuProps = {
+	initialPurchasers: Parameters<typeof usePurchaseForm>[0];
+	purchaseId: Parameters<typeof usePurchaseForm>[1];
+	purchase: Parameters<typeof usePurchaseForm>[2];
+};
+// ドロップダウンメニューごとダイアログ化する必要あり(参考→https://ui.shadcn.com/docs/components/dialog)
+const ControlMenu = ({
+	initialPurchasers,
+	purchaseId,
+	purchase,
+}: ControlMenuProps) => {
+	const supabase = createClient();
+	const queryClient = useQueryClient();
+
+	const {
+		calculateAmountToPay,
+		form,
+		handleSubmitUpdate,
+		purchaserNames,
+		purchasersAmountPaidFields,
+		purchasersAmountToPayFields,
+		watchedPurchasersAmountPaid,
+	} = usePurchaseForm(initialPurchasers, purchaseId, purchase);
+
+	const [equallyDivideCheckIsChecked, setEquallyDivideCheckIsChecked] =
+		useState(false);
+
+	const deletePurchaseMutation = useMutation({
+		mutationFn: async (purchaseId: number) => {
+			const { error } = await supabase
+				.from("purchases")
+				.delete()
+				.eq("id", purchaseId);
+			if (error) throw new Error(error.message);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["purchases"] });
+		},
+	});
+	const settlePurchaseMutation = useMutation({
+		mutationFn: async (purchaseId: number) => {
+			const { error } = await supabase
+				.from("purchases")
+				.update({ is_settled: true })
+				.eq("id", purchaseId)
+				.select();
+			if (error) throw new Error(error.message);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["purchases"] });
+		},
+	});
+
+	return (
+		<Dialog>
+			<DropdownMenu>
+				<DropdownMenuTrigger>
+					<Ellipsis />
+				</DropdownMenuTrigger>
+				<DropdownMenuContent>
+					<DropdownMenuItem
+						onClick={() =>
+							purchaseId && settlePurchaseMutation.mutate(purchaseId)
+						}
+					>
+						精算
+					</DropdownMenuItem>
+					<DialogTrigger asChild>
+						<DropdownMenuItem>編集</DropdownMenuItem>
+					</DialogTrigger>
+					<DropdownMenuItem
+						onClick={() =>
+							purchaseId && deletePurchaseMutation.mutate(purchaseId)
+						}
+					>
+						削除
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>購入品情報編集</DialogTitle>
+				</DialogHeader>
+				<div className="overflow-auto h-96">
+					<Form {...form}>
+						<form
+							id="purchaseUpdateForm"
+							onSubmit={form.handleSubmit(handleSubmitUpdate)}
+							className="space-y-8"
+						>
+							<FormField
+								control={form.control}
+								name="title"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>購入品名</FormLabel>
+										<FormControl>
+											<Input {...field} />
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="date"
+								render={({ field }) => (
+									<FormItem className="flex flex-col">
+										<FormLabel>購入日</FormLabel>
+										<Popover>
+											<PopoverTrigger asChild>
+												<FormControl>
+													<Button
+														variant={"outline"}
+														className={cn(
+															"w-[240px] pl-3 text-left font-normal",
+															!field.value && "text-muted-foreground",
+														)}
+													>
+														{field.value ? (
+															format(field.value, "PPP")
+														) : (
+															<span>Pick a date</span>
+														)}
+														<CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+													</Button>
+												</FormControl>
+											</PopoverTrigger>
+											<PopoverContent className="w-auto p-0" align="start">
+												<Calendar
+													mode="single"
+													selected={field.value}
+													onSelect={field.onChange}
+													disabled={(date) =>
+														date > new Date() || date < new Date("1900-01-01")
+													}
+													initialFocus
+												/>
+											</PopoverContent>
+										</Popover>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="note"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>メモ</FormLabel>
+										<FormControl>
+											<Input {...field} />
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							{purchaserNames.status === "error" ? (
+								<p>error</p>
+							) : (
+								<>
+									<Card>
+										<CardHeader>
+											<CardTitle>支払額</CardTitle>
+										</CardHeader>
+										<CardContent>
+											<ul>
+												{purchasersAmountPaidFields.map((item, index) => (
+													<li key={item.id}>
+														<FormField
+															control={form.control}
+															name={`purchasersAmountPaid.${index}.amountPaid`}
+															render={({ field }) => (
+																<FormItem>
+																	<FormLabel>
+																		{purchaserNames.data[index]}
+																	</FormLabel>
+																	<FormControl>
+																		<Input
+																			{...field}
+																			onChange={(e) => {
+																				const inputValue = e.target.value;
+																				const inputValueAsNumber =
+																					Number(inputValue);
+																				if (
+																					!inputValue ||
+																					Number.isNaN(inputValueAsNumber)
+																				)
+																					field.onChange(inputValue);
+																				else field.onChange(inputValueAsNumber);
+
+																				if (!equallyDivideCheckIsChecked)
+																					return;
+
+																				const amountPaidSum =
+																					watchedPurchasersAmountPaid.reduce(
+																						(
+																							accumulator,
+																							currentValue,
+																							currentIndex,
+																						) => {
+																							if (currentIndex === index)
+																								return (
+																									accumulator +
+																									Number(e.target.value ?? 0)
+																								);
+																							return (
+																								accumulator +
+																								Number(
+																									currentValue.amountPaid ?? 0,
+																								)
+																							);
+																						},
+																						0,
+																					);
+
+																				calculateAmountToPay(amountPaidSum);
+																			}}
+																			placeholder="0"
+																			inputMode="numeric"
+																		/>
+																	</FormControl>
+																	<FormMessage />
+																</FormItem>
+															)}
+														/>
+													</li>
+												))}
+											</ul>
+										</CardContent>
+									</Card>
+
+									<Card>
+										<CardHeader>
+											<CardTitle>割勘金額</CardTitle>
+										</CardHeader>
+										<CardContent>
+											<Switch
+												id="equallyDivideCheck"
+												onCheckedChange={() => {
+													if (equallyDivideCheckIsChecked) return;
+
+													const amountPaidSum =
+														watchedPurchasersAmountPaid.reduce(
+															(accumulator, currentValue) => {
+																return (
+																	accumulator +
+																	Number(currentValue.amountPaid ?? 0)
+																);
+															},
+															0,
+														);
+
+													calculateAmountToPay(amountPaidSum);
+													setEquallyDivideCheckIsChecked((prev) => !prev);
+												}}
+												checked={equallyDivideCheckIsChecked}
+											/>
+											<Label htmlFor="equallyDivideCheck">等分</Label>
+
+											<ul>
+												{purchasersAmountToPayFields.map((item, index) => (
+													<li key={item.id}>
+														<FormField
+															control={form.control}
+															name={`purchasersAmountToPay.${index}.amountToPay`}
+															render={({ field }) => (
+																<FormItem>
+																	<FormLabel>
+																		{purchaserNames.data[index]}
+																	</FormLabel>
+																	<FormControl>
+																		<Input
+																			{...field}
+																			onChange={(e) => {
+																				const inputValue = e.target.value;
+																				const inputValueAsNumber =
+																					Number(inputValue);
+																				if (
+																					!inputValue ||
+																					Number.isNaN(inputValueAsNumber)
+																				)
+																					field.onChange(e);
+																				else field.onChange(inputValueAsNumber);
+																			}}
+																			placeholder="0"
+																			inputMode="numeric"
+																		/>
+																	</FormControl>
+																	<FormMessage />
+																</FormItem>
+															)}
+														/>
+													</li>
+												))}
+											</ul>
+										</CardContent>
+									</Card>
+								</>
+							)}
+						</form>
+					</Form>
+				</div>
+				<DialogFooter>
+					<DialogClose asChild>
+						<Button type="submit" form="purchaseUpdateForm">
+							OK
+						</Button>
+					</DialogClose>
+					<DialogClose asChild>
+						<Button type="button" onClick={() => form.reset()}>
+							キャンセル
+						</Button>
+					</DialogClose>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
 };
 
-const Table = ({ selectedPurchaseIds, onSelectPurchase }: TableProps) => {
+type UnsettledTableProps = {
+	selectedPurchaseIds: number[];
+	onSelectPurchase: (targetId: number) => void;
+	initialPurchasers: ComponentProps<typeof ControlMenu>["initialPurchasers"];
+};
+const UnsettledTable = ({
+	selectedPurchaseIds,
+	onSelectPurchase,
+	initialPurchasers,
+}: UnsettledTableProps) => {
 	const supabase = createClient();
 	const queryClient = useQueryClient();
 
@@ -26,6 +407,7 @@ const Table = ({ selectedPurchaseIds, onSelectPurchase }: TableProps) => {
 					id,
 					title,
 					purchase_date,
+					note,
 					is_settled,
 					purchasers_purchases ( id, purchaser_id, amount_paid, amount_to_pay )
 				`,
@@ -36,17 +418,41 @@ const Table = ({ selectedPurchaseIds, onSelectPurchase }: TableProps) => {
 
 			return purchasesData;
 		},
-		select: (data) =>
-			data?.map((x) => ({
-				id: x.id,
-				title: x.title,
-				date: x.purchase_date ?? undefined,
-				totalAmount: x.purchasers_purchases.reduce(
-					(previous, current) => previous + (current.amount_paid ?? 0),
-					0,
-				),
-			})),
 	});
+	const purchaseTableData: UseQueryDataAndStatus<
+		{
+			id: number;
+			title: string;
+			date: string | undefined;
+			note: string;
+			purchasers: {
+				id: number;
+				purchaser_id: number;
+				amount_paid: number | null;
+				amount_to_pay: number | null;
+			}[];
+			totalAmount: number;
+		}[]
+	> =
+		purchasesCache.status === "error"
+			? { status: "error", data: undefined, isRefetching: false }
+			: purchasesCache.status === "pending"
+				? { status: "pending", data: undefined, isRefetching: false }
+				: {
+						status: "success",
+						data: purchasesCache.data.map((x) => ({
+							id: x.id,
+							title: x.title,
+							date: x.purchase_date ?? undefined,
+							note: x.note,
+							purchasers: x.purchasers_purchases,
+							totalAmount: x.purchasers_purchases.reduce(
+								(previous, current) => previous + (current.amount_paid ?? 0),
+								0,
+							),
+						})),
+						isRefetching: false,
+					};
 
 	const deletePurchaseMutation = useMutation({
 		mutationFn: async (purchaseId: number) => {
@@ -81,65 +487,64 @@ const Table = ({ selectedPurchaseIds, onSelectPurchase }: TableProps) => {
 
 	return (
 		<>
-			{purchasesCache.status === "error" ||
+			{purchaseTableData.status === "error" ||
 			deletePurchaseMutation.status === "error" ||
 			settlePurchaseMutation.status === "error" ? (
 				<ErrorMessage />
-			) : purchasesCache.status === "pending" ||
-			  deletePurchaseMutation.status === "pending" ||
-			  settlePurchaseMutation.status === "pending" ? (
+			) : purchaseTableData.status === "pending" ||
+				deletePurchaseMutation.status === "pending" ||
+				settlePurchaseMutation.status === "pending" ? (
 				<Loader isLoading />
-			) : purchasesCache.data.length === 0 ? (
+			) : purchaseTableData.data.length === 0 ? (
 				<NodataMessage />
 			) : (
-				<table>
-					<thead>
-						<tr>
-							<th />
-							<th>購入品名</th>
-							<th>購入日</th>
-							<th>合計金額</th>
-							<th>精算</th>
-							<th>削除</th>
-						</tr>
-					</thead>
-					<tbody>
-						{purchasesCache.data?.map((x) => (
-							<tr key={x.id}>
-								<td>
-									<input
-										type="checkbox"
-										checked={selectedPurchaseIds.includes(x.id)}
-										onChange={() => onSelectPurchase(x.id)}
-									/>
-								</td>
-								<td>{x.title}</td>
-								<td>{x.date}</td>
-								<td>{x.totalAmount}</td>
-								<td>
-									<button
-										type="button"
-										onClick={() => {
-											settlePurchaseMutation.mutate(x.id);
-										}}
-									>
-										精算
-									</button>
-								</td>
-								<td>
-									<button
-										type="button"
-										onClick={() => {
-											deletePurchaseMutation.mutate(x.id);
-										}}
-									>
-										削除
-									</button>
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
+				<>
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead className="w-[20px]" />
+								<TableHead>購入品名</TableHead>
+								<TableHead>購入日</TableHead>
+								<TableHead>合計金額(円)</TableHead>
+								<TableHead className="w-[20px]" />
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{purchaseTableData.data.map((purchase) => (
+								<TableRow key={purchase.id}>
+									<TableCell>
+										<Checkbox
+											checked={selectedPurchaseIds.includes(purchase.id)}
+											onCheckedChange={() => onSelectPurchase(purchase.id)}
+										/>
+									</TableCell>
+									<TableCell>{purchase.title}</TableCell>
+									<TableCell>{purchase.date}</TableCell>
+									<TableCell>{purchase.totalAmount}</TableCell>
+									<TableCell>
+										<ControlMenu
+											initialPurchasers={initialPurchasers}
+											purchaseId={purchase.id}
+											purchase={{
+												title: purchase.title,
+												date: purchase.date
+													? new Date(purchase.date)
+													: undefined,
+												note: purchase.note,
+												purchasersAmountPaid: purchase.purchasers.map((x) => ({
+													amountPaid: x.amount_paid ?? 0,
+												})),
+												purchasersAmountToPay: purchase.purchasers.map((x) => ({
+													amountToPay: x.amount_to_pay ?? 0,
+												})),
+											}}
+										/>
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</>
 			)}
 		</>
 	);
@@ -151,7 +556,6 @@ type ClientUnsettledBlockProps = {
 		name: string;
 	}[];
 };
-
 export const ClientUnsettledBlock = ({
 	initialPurchasers,
 }: ClientUnsettledBlockProps) => {
@@ -212,33 +616,52 @@ export const ClientUnsettledBlock = ({
 
 	return (
 		<>
-			<ul>
-				{purchasersCache.data.map((x) => (
-					<li key={x.id}>
-						{x.name}が払う額:　
-						{purchasesCache.data?.reduce((previous, current) => {
-							if (!selectedPurchaseIds.includes(current.id)) return previous;
-							return (
-								previous +
-								(current.purchasers_purchases.find(
-									(y) => y.purchaser_id === x.id,
-								)?.amount_to_pay ?? 0) -
-								(current.purchasers_purchases.find(
-									(y) => y.purchaser_id === x.id,
-								)?.amount_paid ?? 0)
-							);
-						}, 0)}
-						円
-					</li>
-				))}
-			</ul>
-			<button
-				type="button"
-				onClick={() => settlePurchasesMutation.mutate(selectedPurchaseIds)}
-			>
-				まとめて精算
-			</button>
-			<Table
+			<Card className="w-[350px]">
+				<CardContent>
+					<Table>
+						<TableHeader>
+							<TableRow>
+								<TableHead>払う人</TableHead>
+								<TableHead>額(円)</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{purchasersCache.data.map((purchaser) => (
+								<TableRow key={purchaser.id}>
+									<TableCell className="font-medium">
+										{purchaser.name}
+									</TableCell>
+									<TableCell>
+										{purchasesCache.data?.reduce((previous, current) => {
+											if (!selectedPurchaseIds.includes(current.id))
+												return previous;
+											return (
+												previous +
+												(current.purchasers_purchases.find(
+													(x) => x.purchaser_id === purchaser.id,
+												)?.amount_to_pay ?? 0) -
+												(current.purchasers_purchases.find(
+													(x) => x.purchaser_id === purchaser.id,
+												)?.amount_paid ?? 0)
+											);
+										}, 0)}
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
+				</CardContent>
+				<CardFooter className="flex justify-between">
+					<Button
+						onClick={() => settlePurchasesMutation.mutate(selectedPurchaseIds)}
+						disabled={!selectedPurchaseIds.length}
+					>
+						まとめて精算
+					</Button>
+				</CardFooter>
+			</Card>
+
+			<UnsettledTable
 				selectedPurchaseIds={selectedPurchaseIds}
 				onSelectPurchase={(targetId) => {
 					setSelectedPurchaseIds((prev) => {
@@ -247,6 +670,7 @@ export const ClientUnsettledBlock = ({
 						return alreadyIncludes ? [...prev, targetId] : prevWithoutTarget;
 					});
 				}}
+				initialPurchasers={initialPurchasers}
 			/>
 		</>
 	);
