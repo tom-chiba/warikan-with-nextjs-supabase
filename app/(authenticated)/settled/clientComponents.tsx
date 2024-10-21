@@ -2,17 +2,9 @@
 
 import ErrorMessage from "@/components/ErrorMessage";
 import NodataMessage from "@/components/NodataMessage";
-import Loader from "@/components/clients/Loader";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Dialog,
 	DialogClose,
@@ -58,7 +50,7 @@ import type { UseQueryDataAndStatus } from "@/utils/supabase/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CalendarIcon, Ellipsis } from "lucide-react";
-import { type ComponentProps, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePurchaseForm } from "../clientComponents";
 
 type ControlMenuProps = {
@@ -66,7 +58,6 @@ type ControlMenuProps = {
 	purchaseId: Parameters<typeof usePurchaseForm>[1];
 	purchase: Parameters<typeof usePurchaseForm>[2];
 };
-// ドロップダウンメニューごとダイアログ化する必要あり(参考→https://ui.shadcn.com/docs/components/dialog)
 const ControlMenu = ({
 	initialPurchasers,
 	purchaseId,
@@ -100,11 +91,11 @@ const ControlMenu = ({
 			queryClient.invalidateQueries({ queryKey: ["purchases"] });
 		},
 	});
-	const settlePurchaseMutation = useMutation({
+	const unsettlePurchaseMutation = useMutation({
 		mutationFn: async (purchaseId: number) => {
 			const { error } = await supabase
 				.from("purchases")
-				.update({ is_settled: true })
+				.update({ is_settled: false })
 				.eq("id", purchaseId)
 				.select();
 			if (error) throw new Error(error.message);
@@ -123,10 +114,10 @@ const ControlMenu = ({
 				<DropdownMenuContent>
 					<DropdownMenuItem
 						onClick={() =>
-							purchaseId && settlePurchaseMutation.mutate(purchaseId)
+							purchaseId && unsettlePurchaseMutation.mutate(purchaseId)
 						}
 					>
-						精算
+						未精算
 					</DropdownMenuItem>
 					<DialogTrigger asChild>
 						<DropdownMenuItem>編集</DropdownMenuItem>
@@ -384,21 +375,34 @@ const ControlMenu = ({
 	);
 };
 
-type UnsettledTableProps = {
-	selectedPurchaseIds: number[];
-	onSelectPurchase: (targetId: number) => void;
-	initialPurchasers: ComponentProps<typeof ControlMenu>["initialPurchasers"];
+type ClientSettledTableProps = {
+	initialPurchases: {
+		id: number;
+		title: string;
+		purchase_date: string | null;
+		note: string;
+		is_settled: boolean;
+		purchasers_purchases: {
+			id: number;
+			purchaser_id: number;
+			amount_paid: number | null;
+			amount_to_pay: number | null;
+		}[];
+	}[];
+	initialPurchasers: {
+		id: number;
+		name: string;
+	}[];
 };
-const UnsettledTable = ({
-	selectedPurchaseIds,
-	onSelectPurchase,
+export const ClientSettledTable = ({
+	initialPurchases,
 	initialPurchasers,
-}: UnsettledTableProps) => {
+}: ClientSettledTableProps) => {
 	const supabase = createClient();
 	const queryClient = useQueryClient();
 
 	const purchasesCache = useQuery({
-		queryKey: ["purchases", "unsettled"],
+		queryKey: ["purchases", "settled"],
 		queryFn: async () => {
 			const { data: purchasesData, error: purchasesError } = await supabase
 				.from("purchases")
@@ -412,13 +416,15 @@ const UnsettledTable = ({
 					purchasers_purchases ( id, purchaser_id, amount_paid, amount_to_pay )
 				`,
 				)
-				.eq("is_settled", false)
+				.eq("is_settled", true)
 				.order("created_at", { ascending: true });
 			if (purchasesError) throw new Error(purchasesError.message);
 
 			return purchasesData;
 		},
+		initialData: initialPurchases,
 	});
+
 	const purchaseTableData: UseQueryDataAndStatus<
 		{
 			id: number;
@@ -436,23 +442,21 @@ const UnsettledTable = ({
 	> =
 		purchasesCache.status === "error"
 			? { status: "error", data: undefined, isRefetching: false }
-			: purchasesCache.status === "pending"
-				? { status: "pending", data: undefined, isRefetching: false }
-				: {
-						status: "success",
-						data: purchasesCache.data.map((x) => ({
-							id: x.id,
-							title: x.title,
-							date: x.purchase_date ?? undefined,
-							note: x.note,
-							purchasers: x.purchasers_purchases,
-							totalAmount: x.purchasers_purchases.reduce(
-								(previous, current) => previous + (current.amount_paid ?? 0),
-								0,
-							),
-						})),
-						isRefetching: false,
-					};
+			: {
+					status: "success",
+					data: purchasesCache.data.map((x) => ({
+						id: x.id,
+						title: x.title,
+						date: x.purchase_date ?? undefined,
+						note: x.note,
+						purchasers: x.purchasers_purchases,
+						totalAmount: x.purchasers_purchases.reduce(
+							(previous, current) => previous + (current.amount_paid ?? 0),
+							0,
+						),
+					})),
+					isRefetching: false,
+				};
 
 	const deletePurchaseMutation = useMutation({
 		mutationFn: async (purchaseId: number) => {
@@ -467,11 +471,11 @@ const UnsettledTable = ({
 		},
 	});
 
-	const settlePurchaseMutation = useMutation({
+	const unsettlePurchaseMutation = useMutation({
 		mutationFn: async (purchaseId: number) => {
 			const { error } = await supabase
 				.from("purchases")
-				.update({ is_settled: true })
+				.update({ is_settled: false })
 				.eq("id", purchaseId)
 				.select();
 			if (error) throw new Error(error.message);
@@ -482,196 +486,55 @@ const UnsettledTable = ({
 	});
 
 	useEffect(() => {
-		queryClient.invalidateQueries({ queryKey: ["purchases", "unsettled"] });
+		queryClient.invalidateQueries({ queryKey: ["purchases", "settled"] });
 	}, [queryClient]);
 
 	return (
 		<>
 			{purchaseTableData.status === "error" ||
 			deletePurchaseMutation.status === "error" ||
-			settlePurchaseMutation.status === "error" ? (
+			unsettlePurchaseMutation.status === "error" ? (
 				<ErrorMessage />
-			) : purchaseTableData.status === "pending" ||
-				deletePurchaseMutation.status === "pending" ||
-				settlePurchaseMutation.status === "pending" ? (
-				<Loader isLoading />
 			) : purchaseTableData.data.length === 0 ? (
 				<NodataMessage />
 			) : (
-				<>
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead className="w-[20px]" />
-								<TableHead>購入品名</TableHead>
-								<TableHead>購入日</TableHead>
-								<TableHead>合計金額(円)</TableHead>
-								<TableHead className="w-[20px]" />
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead>購入品名</TableHead>
+							<TableHead>購入日</TableHead>
+							<TableHead>合計金額(円)</TableHead>
+							<TableHead className="w-[20px]" />
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{purchaseTableData.data.map((purchase) => (
+							<TableRow key={purchase.id}>
+								<TableCell>{purchase.title}</TableCell>
+								<TableCell>{purchase.date}</TableCell>
+								<TableCell>{purchase.totalAmount}</TableCell>
+								<TableCell>
+									<ControlMenu
+										initialPurchasers={initialPurchasers}
+										purchaseId={purchase.id}
+										purchase={{
+											title: purchase.title,
+											date: purchase.date ? new Date(purchase.date) : undefined,
+											note: purchase.note,
+											purchasersAmountPaid: purchase.purchasers.map((x) => ({
+												amountPaid: x.amount_paid ?? 0,
+											})),
+											purchasersAmountToPay: purchase.purchasers.map((x) => ({
+												amountToPay: x.amount_to_pay ?? 0,
+											})),
+										}}
+									/>
+								</TableCell>
 							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{purchaseTableData.data.map((purchase) => (
-								<TableRow key={purchase.id}>
-									<TableCell>
-										<Checkbox
-											checked={selectedPurchaseIds.includes(purchase.id)}
-											onCheckedChange={() => onSelectPurchase(purchase.id)}
-										/>
-									</TableCell>
-									<TableCell>{purchase.title}</TableCell>
-									<TableCell>{purchase.date}</TableCell>
-									<TableCell>{purchase.totalAmount}</TableCell>
-									<TableCell>
-										<ControlMenu
-											initialPurchasers={initialPurchasers}
-											purchaseId={purchase.id}
-											purchase={{
-												title: purchase.title,
-												date: purchase.date
-													? new Date(purchase.date)
-													: undefined,
-												note: purchase.note,
-												purchasersAmountPaid: purchase.purchasers.map((x) => ({
-													amountPaid: x.amount_paid ?? 0,
-												})),
-												purchasersAmountToPay: purchase.purchasers.map((x) => ({
-													amountToPay: x.amount_to_pay ?? 0,
-												})),
-											}}
-										/>
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				</>
+						))}
+					</TableBody>
+				</Table>
 			)}
-		</>
-	);
-};
-
-type ClientUnsettledBlockProps = {
-	initialPurchasers: {
-		id: number;
-		name: string;
-	}[];
-};
-export const ClientUnsettledBlock = ({
-	initialPurchasers,
-}: ClientUnsettledBlockProps) => {
-	const supabase = createClient();
-	const queryClient = useQueryClient();
-
-	const [selectedPurchaseIds, setSelectedPurchaseIds] = useState<number[]>([]);
-
-	const purchasersCache = useQuery({
-		queryKey: ["purchasers"],
-		queryFn: async () => {
-			const { data: purchasers, error } = await supabase
-				.from("purchasers")
-				.select("id, name")
-				.order("created_at", { ascending: true });
-			if (error) throw new Error(error.message);
-
-			return purchasers;
-		},
-		initialData: initialPurchasers,
-	});
-
-	const purchasesCache = useQuery({
-		queryKey: ["purchases"],
-		queryFn: async () => {
-			const { data: purchasesData, error: purchasesError } = await supabase
-				.from("purchases")
-				.select(
-					`
-					id,
-					title,
-					purchase_date,
-					is_settled,
-					purchasers_purchases (id, purchaser_id, amount_paid, amount_to_pay )
-				`,
-				)
-				.eq("is_settled", false)
-				.order("created_at", { ascending: true });
-			if (purchasesError) throw new Error(purchasesError.message);
-
-			return purchasesData;
-		},
-	});
-
-	const settlePurchasesMutation = useMutation({
-		mutationFn: async (purchaseIds: number[]) => {
-			const { error } = await supabase
-				.from("purchases")
-				.update({ is_settled: true })
-				.in("id", purchaseIds)
-				.select();
-			if (error) throw new Error(error.message);
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["purchases"] });
-		},
-	});
-
-	return (
-		<>
-			<Card className="w-[350px]">
-				<CardContent>
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>払う人</TableHead>
-								<TableHead>額(円)</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{purchasersCache.data.map((purchaser) => (
-								<TableRow key={purchaser.id}>
-									<TableCell className="font-medium">
-										{purchaser.name}
-									</TableCell>
-									<TableCell>
-										{purchasesCache.data?.reduce((previous, current) => {
-											if (!selectedPurchaseIds.includes(current.id))
-												return previous;
-											return (
-												previous +
-												(current.purchasers_purchases.find(
-													(x) => x.purchaser_id === purchaser.id,
-												)?.amount_to_pay ?? 0) -
-												(current.purchasers_purchases.find(
-													(x) => x.purchaser_id === purchaser.id,
-												)?.amount_paid ?? 0)
-											);
-										}, 0)}
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				</CardContent>
-				<CardFooter className="flex justify-between">
-					<Button
-						onClick={() => settlePurchasesMutation.mutate(selectedPurchaseIds)}
-						disabled={!selectedPurchaseIds.length}
-					>
-						まとめて精算
-					</Button>
-				</CardFooter>
-			</Card>
-
-			<UnsettledTable
-				selectedPurchaseIds={selectedPurchaseIds}
-				onSelectPurchase={(targetId) => {
-					setSelectedPurchaseIds((prev) => {
-						const prevWithoutTarget = prev.filter((x) => x !== targetId);
-						const alreadyIncludes = prevWithoutTarget.length === prev.length;
-						return alreadyIncludes ? [...prev, targetId] : prevWithoutTarget;
-					});
-				}}
-				initialPurchasers={initialPurchasers}
-			/>
 		</>
 	);
 };

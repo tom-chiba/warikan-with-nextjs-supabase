@@ -1,90 +1,69 @@
 "use client";
 
-import Input from "@/components/Input";
-import { createClient } from "@/utils/supabase/client";
-import { useForm } from "@conform-to/react";
-import { parseWithZod } from "@conform-to/zod";
-import { mdiAccountMinus, mdiAccountPlus, mdiClose } from "@mdi/js";
-import Icon from "@mdi/react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-	type ForwardedRef,
-	forwardRef,
-	useEffect,
-	useRef,
-	useState,
-} from "react";
-import { useFormState } from "react-dom";
-import { purchaseSchema } from "./components";
-import { createPurchase } from "./serverActions";
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableFooter,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { createClient } from "@/utils/supabase/client";
+import type { UseQueryDataAndStatus } from "@/utils/supabase/types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {} from "@mdi/js";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { CalendarIcon, Check, Edit, Trash, X } from "lucide-react";
+import { useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { z } from "zod";
 
-type AmountEntryFieldProps = {
-	id: string;
-	label: string;
-	inputName: string;
-	onChange?: (newValue: string) => void;
-};
-
-const AmountEntryField = forwardRef(
-	(
-		{ id, label, inputName, onChange }: AmountEntryFieldProps,
-		inputRef: ForwardedRef<HTMLInputElement>,
-	) => {
-		return (
-			<div className="flex gap-4 border-b-2 border-gray-300 p-1 min-w-0">
-				<label className="truncate" htmlFor={id}>
-					{label}
-				</label>
-				<div className="flex gap-1">
-					<Input
-						id={id}
-						name={inputName}
-						size="small"
-						onChange={(e) => onChange?.(e.target.value)}
-						ref={inputRef}
-					/>
-					<span>円</span>
-				</div>
-			</div>
-		);
-	},
-);
-
-type PurchasersDialogProps = {
+type ClientPurchasersDialogProps = {
 	initialPurchasers: {
 		id: number;
 		name: string;
 	}[];
-	isOpen: boolean;
-	onClose: () => void;
-	onCreate: () => void;
-	onDelete: () => void;
 };
-
 const ClientPurchasersDialog = ({
 	initialPurchasers,
-	isOpen,
-	onClose,
-	onCreate,
-	onDelete,
-}: PurchasersDialogProps) => {
+}: ClientPurchasersDialogProps) => {
 	const supabase = createClient();
 	const queryClient = useQueryClient();
 
-	const dialogRef = useRef<HTMLDialogElement>(null);
-	const [inputPurchaserName, setInputPurchaserName] = useState<
-		string | undefined
-	>();
-	const [tempPurchasersToCreate, setTempPurchasersToCreate] = useState<
-		| {
-				id: string;
-				name: string;
-		  }[]
-		| undefined
-	>();
-	const [purchasersIdToDelete, setPurchasersIdToDelete] = useState<
-		(number | string)[] | undefined
-	>();
+	const [inputPurchaser, setInputPurchaser] = useState<
+		{ id: number | undefined; name: string } | undefined
+	>(undefined);
 
 	const purchasersCache = useQuery({
 		queryKey: ["purchasers"],
@@ -101,183 +80,222 @@ const ClientPurchasersDialog = ({
 	});
 
 	const createPurchaserMutation = useMutation({
-		mutationFn: async () => {
-			if (!tempPurchasersToCreate?.length) return;
-
+		mutationFn: async (name: string) => {
 			const { error } = await supabase
 				.from("purchasers")
-				.insert(
-					tempPurchasersToCreate.map((purchaser) => ({ name: purchaser.name })),
-				)
+				.insert({ name })
 				.select();
 			if (error) throw new Error(error.message);
 		},
 		onSuccess: () => {
-			onCreate();
-			setTempPurchasersToCreate(undefined);
+			queryClient.invalidateQueries({ queryKey: ["purchasers"] });
 		},
 	});
 
-	const deletePurchasersMutation = useMutation({
-		mutationFn: async () => {
-			if (!purchasersIdToDelete?.length) return;
-
-			const { error } = await supabase
+	const updatePurchaserMutation = useMutation({
+		mutationFn: async ({ id, newName }: { id: number; newName: string }) => {
+			const { data, error } = await supabase
 				.from("purchasers")
-				.delete()
-				.in("id", purchasersIdToDelete);
+				.update({ name: newName })
+				.eq("id", id)
+				.select();
 			if (error) throw new Error(error.message);
 		},
 		onSuccess: () => {
-			onDelete();
-			setPurchasersIdToDelete(undefined);
+			queryClient.invalidateQueries({ queryKey: ["purchasers"] });
 		},
 	});
 
-	const MemberLi = ({
-		purchaser,
-	}: {
-		purchaser:
-			| {
-					id: number;
-					name: string;
-			  }
-			| { id: string; name: string };
-	}) => (
-		<li
-			className={`border-b-2 border-gray-300 py-2 flex justify-between${
-				purchasersIdToDelete?.some((x) => x === purchaser.id)
-					? " text-red-500"
-					: ""
-			}`}
-			key={purchaser.id}
-		>
-			<div className="truncate">{purchaser.name}</div>
-			{(() => {
-				if (!purchasersIdToDelete) return null;
-				if (purchasersIdToDelete.some((x) => x === purchaser.id))
-					return (
-						<button
-							type="button"
-							className="flex gap-1"
-							onClick={() =>
-								setPurchasersIdToDelete((prev) => {
-									if (!prev) throw new Error();
-									return prev.filter((x) => x !== purchaser.id);
-								})
-							}
-						>
-							<Icon path={mdiClose} size={1} />
-							キャンセル
-						</button>
-					);
-				return (
-					<button
-						type="button"
-						className="flex gap-1"
-						onClick={() =>
-							setPurchasersIdToDelete((prev) =>
-								prev ? [...prev, purchaser.id] : [purchaser.id],
-							)
-						}
-					>
-						<Icon path={mdiClose} size={1} />
-						削除
-					</button>
-				);
-			})()}
-		</li>
-	);
+	const deletePurchaserMutation = useMutation({
+		mutationFn: async (id: number) => {
+			const { error } = await supabase.from("purchasers").delete().eq("id", id);
+			if (error) throw new Error(error.message);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["purchasers"] });
+		},
+	});
 
-	useEffect(() => {
-		if (isOpen) {
-			dialogRef.current?.showModal();
-			return;
+	const endEditingPurchaserName = (mode: "create" | "update") => {
+		if (!inputPurchaser) return;
+		if (!inputPurchaser.name) return;
+		switch (mode) {
+			case "create": {
+				createPurchaserMutation.mutate(inputPurchaser.name);
+				break;
+			}
+			case "update": {
+				if (!inputPurchaser.id) return;
+				updatePurchaserMutation.mutate({
+					id: inputPurchaser.id,
+					newName: inputPurchaser.name,
+				});
+				break;
+			}
 		}
-		dialogRef.current?.close();
-	}, [isOpen]);
+		setInputPurchaser(undefined);
+	};
 
 	return (
-		<dialog className="px-4 py-2" ref={dialogRef} onClose={onClose}>
-			<header className="flex items-center justify-between gap-1 ">
-				<h1>メンバー管理</h1>
-				<div className="flex gap-1">
-					<button
-						className="border px-1 bg-gray-200"
-						type="button"
-						onClick={() => {
-							setPurchasersIdToDelete(undefined);
-							setInputPurchaserName((prev) => {
-								if (prev === undefined) return "";
-								return undefined;
-							});
-						}}
-					>
-						<Icon path={mdiAccountPlus} size={1} />
-					</button>
-					<button
-						className="border px-1 bg-gray-200"
-						type="button"
-						onClick={() => {
-							setInputPurchaserName(undefined);
-							setPurchasersIdToDelete((prev) => (prev ? undefined : []));
-						}}
-					>
-						<Icon path={mdiAccountMinus} size={1} />
-					</button>
-				</div>
-			</header>
-			<div className="py-4">
-				<ul>
-					{purchasersCache.data.map((purchaser) => (
-						<MemberLi key={purchaser.id} purchaser={purchaser} />
-					))}
-					{tempPurchasersToCreate?.map((purchaser) => (
-						<MemberLi key={purchaser.id} purchaser={purchaser} />
-					))}
-					{inputPurchaserName !== undefined && (
-						<li className="border-b-2 border-gray-300 py-2">
-							<div className="bg-blue-50 flex justify-between px-1">
-								<input
-									type="text"
-									className="bg-transparent flex-1 focus-visible:outline-none"
-									value={inputPurchaserName}
-									onChange={(e) => setInputPurchaserName(e.target.value)}
-								/>
-								<Icon path={mdiClose} size={1} className="text-gray-400" />
-							</div>
-						</li>
-					)}
-				</ul>
-			</div>
-			<footer className="text-center">
-				<button
-					className="bg-gray-200 px-3 shadow"
-					type="button"
-					onClick={() => {
-						if (inputPurchaserName === undefined) {
-							dialogRef.current?.close();
-							(async () => {
-								await Promise.all([
-									createPurchaserMutation.mutate(),
-									deletePurchasersMutation.mutate(),
-								]);
-								queryClient.invalidateQueries({ queryKey: ["purchasers"] });
-							})();
-						}
-						if (inputPurchaserName) {
-							setTempPurchasersToCreate((prev) => [
-								...(prev ?? []),
-								{ id: new Date().toString(), name: inputPurchaserName },
-							]);
-						}
-						setInputPurchaserName(undefined);
-					}}
-				>
-					完了
-				</button>
-			</footer>
-		</dialog>
+		<Dialog>
+			<DialogTrigger asChild>
+				<Button variant="outline">メンバー管理</Button>
+			</DialogTrigger>
+			<DialogContent className="sm:max-w-[425px]">
+				<DialogHeader>
+					<DialogTitle>メンバー管理</DialogTitle>
+				</DialogHeader>
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead className="w-[200px]">名前</TableHead>
+							<TableHead className="w-[20px]" />
+							<TableHead className="w-[20px]" />
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{purchasersCache.data.map((purchaser) => (
+							<TableRow key={purchaser.name}>
+								<TableCell className="font-medium">
+									{inputPurchaser?.id === purchaser.id ? (
+										<Input
+											value={inputPurchaser.name}
+											onChange={(e) =>
+												setInputPurchaser((prev) => {
+													if (!prev) return prev;
+													return {
+														...prev,
+														name: e.target.value,
+													};
+												})
+											}
+											onKeyDown={(e) => {
+												if (e.key === "Enter")
+													endEditingPurchaserName("update");
+											}}
+										/>
+									) : (
+										<>{purchaser.name}</>
+									)}
+								</TableCell>
+
+								<TableCell>
+									{inputPurchaser?.id === purchaser.id ? (
+										<Button
+											size="icon"
+											onClick={() => endEditingPurchaserName("update")}
+											disabled={!inputPurchaser.name}
+										>
+											<Check className="h-4 w-4" />
+										</Button>
+									) : (
+										<Button
+											variant="outline"
+											size="icon"
+											onClick={() =>
+												setInputPurchaser({
+													id: purchaser.id,
+													name: purchaser.name,
+												})
+											}
+											disabled={inputPurchaser !== undefined}
+										>
+											<Edit className="h-4 w-4" />
+										</Button>
+									)}
+								</TableCell>
+
+								<TableCell>
+									{inputPurchaser?.id === purchaser.id ? (
+										<Button
+											variant="outline"
+											size="icon"
+											onClick={() => setInputPurchaser(undefined)}
+										>
+											<X className="h-4 w-4" />
+										</Button>
+									) : (
+										<Button
+											size="icon"
+											onClick={() =>
+												deletePurchaserMutation.mutate(purchaser.id)
+											}
+											disabled={inputPurchaser !== undefined}
+										>
+											<Trash className="h-4 w-4" />
+										</Button>
+									)}
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+					<TableFooter>
+						<TableRow>
+							{inputPurchaser && inputPurchaser.id === undefined ? (
+								<>
+									<TableCell>
+										<Input
+											value={inputPurchaser?.name}
+											onChange={(e) =>
+												setInputPurchaser((prev) => {
+													if (!prev) return prev;
+													return { ...prev, name: e.target.value };
+												})
+											}
+											onKeyDown={(e) => {
+												if (e.key === "Enter")
+													endEditingPurchaserName("create");
+											}}
+										/>
+									</TableCell>
+									<TableCell>
+										<Button
+											size="icon"
+											onClick={() => endEditingPurchaserName("create")}
+											disabled={!inputPurchaser.name}
+										>
+											<Check className="h-4 w-4" />
+										</Button>
+									</TableCell>
+									<TableCell>
+										<Button
+											variant="outline"
+											size="icon"
+											onClick={() => setInputPurchaser(undefined)}
+										>
+											<X className="h-4 w-4" />
+										</Button>
+									</TableCell>
+								</>
+							) : (
+								<TableCell>
+									<Button
+										variant="outline"
+										onClick={() =>
+											setInputPurchaser({ id: undefined, name: "" })
+										}
+										disabled={inputPurchaser !== undefined}
+									>
+										追加
+									</Button>
+								</TableCell>
+							)}
+						</TableRow>
+					</TableFooter>
+				</Table>
+				<DialogFooter>
+					<DialogClose asChild>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setInputPurchaser(undefined)}
+						>
+							閉じる
+						</Button>
+					</DialogClose>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 };
 
@@ -288,12 +306,43 @@ type ClientFormProps = {
 	}[];
 };
 
-export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
+const purchaseSchema = z.object({
+	title: z.string().min(1, { message: "必須" }),
+	date: z.date().optional(),
+	note: z.string().optional(),
+	purchasersAmountPaid: z.array(
+		z.object({
+			amountPaid: z.union([
+				z
+					.number({ message: "数字じゃないとダメ" })
+					.nonnegative({ message: "0以上の値じゃないとダメ" })
+					.int({ message: "整数じゃないとダメ" }),
+				z.string().length(0, { message: "数字じゃないとダメ" }),
+			]),
+		}),
+	),
+	purchasersAmountToPay: z.array(
+		z.object({
+			amountToPay: z.union([
+				z
+					.number({ message: "数字じゃないとダメ" })
+					.nonnegative({ message: "0以上の値じゃないとダメ" })
+					.int({ message: "整数じゃないとダメ" }),
+				z.string().length(0, { message: "数字じゃないとダメ" }),
+			]),
+		}),
+	),
+});
+
+export const usePurchaseForm = (
+	initialPurchasers: ClientFormProps["initialPurchasers"],
+	purchaseIdForUpdate?: number,
+	formDefaultValues?: Required<
+		Parameters<typeof useForm<z.infer<typeof purchaseSchema>>>
+	>[0]["defaultValues"],
+) => {
 	const supabase = createClient();
 	const queryClient = useQueryClient();
-
-	const [clientPurchasersDialogIsOpen, setClientPurchasersDialogIsOpen] =
-		useState(false);
 
 	const purchasersCache = useQuery({
 		queryKey: ["purchasers"],
@@ -308,190 +357,402 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 		},
 		initialData: initialPurchasers,
 	});
+	const createPurchaseMutation = useMutation({
+		mutationFn: async ({
+			title,
+			date,
+			note,
+			purchasersAmountPaid,
+			purchasersAmountToPay,
+		}: z.infer<typeof purchaseSchema>) => {
+			const { data: purchaseData, error: purchaseError } = await supabase
+				.from("purchases")
+				.insert([
+					{
+						title: title,
+						purchase_date: date?.toLocaleDateString("sv-SE") || null, // NOTE: 参考記事→https://www.ey-office.com/blog_archive/2023/04/18/short-code-to-get-todays-date-in-yyyy-mm-dd-format-in-javascript/
+						note: note ?? "",
+					},
+				])
+				.select();
+			if (purchaseError) throw new Error(purchaseError.message);
 
-	const createPurchaseWithPurchasers = createPurchase.bind(
-		null,
-		purchasersCache.data.map((x) => x.id),
-	);
+			const insertedPurchaseData = purchaseData[0];
 
-	const [lastResult, action] = useFormState(
-		createPurchaseWithPurchasers,
-		undefined,
-	);
-	const [form, fields] = useForm({
-		lastResult,
-		onValidate({ formData }) {
-			return parseWithZod(formData, { schema: purchaseSchema });
+			const { error: purchasersPurchasesError } = await supabase
+				.from("purchasers_purchases")
+				.insert(
+					purchasersAmountPaid.map((x, i) => ({
+						purchase_id: insertedPurchaseData.id,
+						purchaser_id: purchasersCache.data[i].id,
+						amount_paid: typeof x.amountPaid === "number" ? x.amountPaid : null,
+						amount_to_pay:
+							typeof purchasersAmountToPay[i].amountToPay === "number"
+								? purchasersAmountToPay[i].amountToPay
+								: null,
+					})),
+				)
+				.select();
+
+			// TODO: トランザクション処理
+			if (purchasersPurchasesError)
+				throw new Error(
+					`処理に失敗しました。purchases tableからid=${insertedPurchaseData.id}に紐づく行を削除してください。`,
+				);
 		},
-		shouldValidate: "onBlur",
-		defaultValue: {
-			purchasers: initialPurchasers.map((x) => ({ name: x.name })),
+		onSuccess: () => form.reset(),
+		throwOnError: true,
+	});
+	const updatePurchaseMutation = useMutation({
+		mutationFn: async ({
+			title,
+			date,
+			note,
+			purchasersAmountPaid,
+			purchasersAmountToPay,
+		}: z.infer<typeof purchaseSchema>) => {
+			if (!purchaseIdForUpdate) return;
+
+			const { data: purchaseData, error: purchaseError } = await supabase
+				.from("purchases")
+				.update({
+					title: title,
+					purchase_date: date?.toLocaleDateString("sv-SE") || null,
+					note: note ?? "",
+				})
+				.eq("id", purchaseIdForUpdate)
+				.select();
+			if (purchaseError) throw new Error(purchaseError.message);
+
+			const updatedPurchaseData = purchaseData[0];
+
+			for (const [i, x] of purchasersAmountPaid.entries()) {
+				const { error: purchasersPurchasesError } = await supabase
+					.from("purchasers_purchases")
+					.update({
+						amount_paid: typeof x.amountPaid === "number" ? x.amountPaid : null,
+						amount_to_pay:
+							typeof purchasersAmountToPay[i].amountToPay === "number"
+								? purchasersAmountToPay[i].amountToPay
+								: null,
+					})
+					.eq("purchase_id", purchaseIdForUpdate)
+					.eq("purchaser_id", purchasersCache.data[i].id)
+					.select();
+
+				// TODO: トランザクション処理
+				if (purchasersPurchasesError)
+					throw new Error(
+						`処理に失敗しました。purchases tableからid=${updatedPurchaseData.id}に紐づく行を削除してください。`,
+					);
+			}
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({
+				queryKey: ["purchases", "unsettled"],
+			});
+		},
+		throwOnError: true,
+	});
+
+	const purchaserNames: UseQueryDataAndStatus<string[]> =
+		purchasersCache.status !== "success"
+			? {
+					status: purchasersCache.status,
+					data: undefined,
+					isRefetching: purchasersCache.isRefetching,
+				}
+			: {
+					status: "success",
+					data: purchasersCache.data?.map((x) => x.name),
+					isRefetching: purchasersCache.isRefetching,
+				};
+
+	const form = useForm<z.infer<typeof purchaseSchema>>({
+		resolver: zodResolver(purchaseSchema),
+		defaultValues: formDefaultValues ?? {
+			title: "",
+			date: new Date(),
+			note: "",
+			purchasersAmountPaid:
+				purchaserNames.data?.map((x) => ({ amountPaid: 0 })) ?? [],
+			purchasersAmountToPay:
+				purchaserNames.data?.map((x) => ({ amountToPay: 0 })) ?? [],
 		},
 	});
-	const purchasersFieldList = fields.purchasers.getFieldList();
 
-	const amountPaidMapRefs = useRef<Map<string, HTMLInputElement> | null>(null);
-	const amountToPayMapRefs = useRef<Map<string, HTMLInputElement> | null>(null);
-	const getAmountPaidMap = () => {
-		if (!amountPaidMapRefs.current) amountPaidMapRefs.current = new Map();
+	const { fields: purchasersAmountPaidFields } = useFieldArray({
+		control: form.control,
+		name: "purchasersAmountPaid",
+	});
+	const {
+		fields: purchasersAmountToPayFields,
+		replace: purchasersAmountToPayReplace,
+	} = useFieldArray({
+		control: form.control,
+		name: "purchasersAmountToPay",
+	});
 
-		return amountPaidMapRefs.current;
+	const handleSubmitCreate = (values: z.infer<typeof purchaseSchema>) => {
+		createPurchaseMutation.mutate(values);
 	};
-	const getAmountToPayMap = () => {
-		if (!amountToPayMapRefs.current) amountToPayMapRefs.current = new Map();
-
-		return amountToPayMapRefs.current;
-	};
-
-	const equallyDivideCheckRef = useRef<HTMLInputElement>(null);
-
-	const divideEqually = () => {
-		const amountPaidMap = getAmountPaidMap();
-		const amountToPayMap = getAmountToPayMap();
-
-		let amountPaidSum = 0;
-		for (const amountPaidRef of Array.from(amountPaidMap.values()))
-			amountPaidSum += Number(amountPaidRef.value);
-
-		for (const amountToPayRef of Array.from(amountToPayMap.values()))
-			amountToPayRef.value = String(
-				amountPaidSum / purchasersCache.data.length,
-			);
+	const handleSubmitUpdate = (values: z.infer<typeof purchaseSchema>) => {
+		updatePurchaseMutation.mutate(values);
 	};
 
-	useEffect(() => {
-		form.errors && alert(form.errors);
-	}, [form.errors]);
+	const calculateAmountToPay = (amountPaidSum: number) => {
+		const dividedEquallyPurchasersAmountToPay = watchedPurchasersAmountPaid.map(
+			(x) => ({
+				amountToPay: amountPaidSum / watchedPurchasersAmountPaid.length,
+			}),
+		);
 
-	useEffect(() => {
-		if (fields.purchasers.getFieldList().length === purchasersCache.data.length)
-			return;
+		purchasersAmountToPayReplace(dividedEquallyPurchasersAmountToPay);
+	};
 
-		for (const _ of fields.purchasers.getFieldList()) {
-			form.remove({ name: fields.purchasers.name, index: 0 });
-		}
-		purchasersCache.data.forEach((x, index) => {
-			form.insert({
-				name: fields.purchasers.name,
-				index,
-				defaultValue: { name: x.name },
-			});
-		});
-	}, [fields.purchasers, form, purchasersCache.data]);
+	const watchedPurchasersAmountPaid = form.watch("purchasersAmountPaid");
+
+	return {
+		purchasersCache,
+		purchaserNames,
+		form,
+		purchasersAmountPaidFields,
+		purchasersAmountToPayFields,
+		handleSubmitCreate,
+		handleSubmitUpdate,
+		calculateAmountToPay,
+		watchedPurchasersAmountPaid,
+	};
+};
+
+export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
+	const [equallyDivideCheckIsChecked, setEquallyDivideCheckIsChecked] =
+		useState(false);
+
+	const {
+		purchasersCache,
+		purchaserNames,
+		form,
+		purchasersAmountPaidFields,
+		purchasersAmountToPayFields,
+		handleSubmitCreate,
+		calculateAmountToPay,
+		watchedPurchasersAmountPaid,
+	} = usePurchaseForm(initialPurchasers);
 
 	return (
-		<>
-			<form id={form.id} action={action} onSubmit={form.onSubmit} noValidate>
-				<div>
-					<label htmlFor={fields.title.id}>購入品名</label>
-					<Input id={fields.title.id} name={fields.title.name} />
-					<p>{fields.title.errors}</p>
-				</div>
-				<div>
-					<label htmlFor={fields.date.id}>購入日</label>
-					<Input id={fields.date.id} type="date" name={fields.date.name} />
-					<p>{fields.date.errors}</p>
-				</div>
-				<div>
-					<label htmlFor={fields.note.id}>メモ</label>
-					<Input id={fields.note.id} name={fields.note.name} />
-					<p>{fields.note.errors}</p>
-				</div>
-				<button
-					className="border"
-					type="button"
-					onClick={() => setClientPurchasersDialogIsOpen(true)}
-				>
-					メンバー管理
-				</button>
-				<div>
-					<span>支払額</span>
-					<div>
-						{purchasersFieldList.map((x) => {
-							const fieldSet = x.getFieldset();
-
-							return (
-								<div key={fieldSet.amountPaid.key} className="flex justify-end">
-									<AmountEntryField
-										id={fieldSet.amountPaid.id}
-										label={fieldSet.name.initialValue ?? ""}
-										inputName={fieldSet.amountPaid.name}
-										ref={(node) => {
-											const amountPaidMap = getAmountPaidMap();
-											if (node) {
-												amountPaidMap.set(fieldSet.amountPaid.id, node);
-											} else {
-												amountPaidMap.delete(fieldSet.amountPaid.id);
-											}
-										}}
-										onChange={() => {
-											if (!equallyDivideCheckRef.current?.checked) return;
-
-											divideEqually();
-										}}
-									/>
-									<p>{fieldSet.amountPaid.errors}</p>
-								</div>
-							);
-						})}
-					</div>
-				</div>
-				<div>
-					<span>割勘金額</span>
-					<div>
-						<input
-							ref={equallyDivideCheckRef}
-							type="checkbox"
-							id="equallyDivideCheck"
-							onChange={() => {
-								if (!equallyDivideCheckRef.current?.checked) return;
-
-								divideEqually();
-							}}
-						/>
-						<label htmlFor="equallyDivideCheck">等分</label>
-					</div>
-					<div>
-						{purchasersFieldList.map((x) => {
-							const fieldSet = x.getFieldset();
-
-							return (
-								<div
-									key={fieldSet.amountToPay.key}
-									className="flex justify-end"
-								>
-									<AmountEntryField
-										id={fieldSet.amountToPay.id}
-										label={fieldSet.name.initialValue ?? ""}
-										inputName={fieldSet.amountToPay.name}
-										ref={(node) => {
-											const amountToPayMap = getAmountToPayMap();
-											if (node) {
-												amountToPayMap.set(fieldSet.amountToPay.id, node);
-											} else {
-												amountToPayMap.delete(fieldSet.amountToPay.id);
-											}
-										}}
-									/>
-									<p>{fieldSet.amountToPay.errors}</p>
-								</div>
-							);
-						})}
-					</div>
-				</div>
-				<button type="submit">追加</button>
-				<ClientPurchasersDialog
-					isOpen={clientPurchasersDialogIsOpen}
-					onClose={() => setClientPurchasersDialogIsOpen(false)}
-					initialPurchasers={purchasersCache.data}
-					onCreate={() => {
-						queryClient.invalidateQueries({ queryKey: ["purchasers"] });
-					}}
-					onDelete={() => {
-						queryClient.invalidateQueries({ queryKey: ["purchasers"] });
-					}}
+		<Form {...form}>
+			<form
+				onSubmit={form.handleSubmit(handleSubmitCreate)}
+				className="space-y-8"
+			>
+				<FormField
+					control={form.control}
+					name="title"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>購入品名</FormLabel>
+							<FormControl>
+								<Input {...field} />
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
 				/>
+
+				<FormField
+					control={form.control}
+					name="date"
+					render={({ field }) => (
+						<FormItem className="flex flex-col">
+							<FormLabel>購入日</FormLabel>
+							<Popover>
+								<PopoverTrigger asChild>
+									<FormControl>
+										<Button
+											variant={"outline"}
+											className={cn(
+												"w-[240px] pl-3 text-left font-normal",
+												!field.value && "text-muted-foreground",
+											)}
+										>
+											{field.value ? (
+												format(field.value, "PPP")
+											) : (
+												<span>Pick a date</span>
+											)}
+											<CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+										</Button>
+									</FormControl>
+								</PopoverTrigger>
+								<PopoverContent className="w-auto p-0" align="start">
+									<Calendar
+										mode="single"
+										selected={field.value}
+										onSelect={field.onChange}
+										disabled={(date) =>
+											date > new Date() || date < new Date("1900-01-01")
+										}
+										initialFocus
+									/>
+								</PopoverContent>
+							</Popover>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+
+				<FormField
+					control={form.control}
+					name="note"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>メモ</FormLabel>
+							<FormControl>
+								<Input {...field} />
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+
+				<ClientPurchasersDialog initialPurchasers={purchasersCache.data} />
+
+				{purchaserNames.status === "error" ? (
+					<p>error</p>
+				) : (
+					<>
+						<Card>
+							<CardHeader>
+								<CardTitle>支払額</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<ul>
+									{purchasersAmountPaidFields.map((item, index) => (
+										<li key={item.id}>
+											<FormField
+												control={form.control}
+												name={`purchasersAmountPaid.${index}.amountPaid`}
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>{purchaserNames.data[index]}</FormLabel>
+														<FormControl>
+															<Input
+																{...field}
+																onChange={(e) => {
+																	const inputValue = e.target.value;
+																	const inputValueAsNumber = Number(inputValue);
+																	if (
+																		!inputValue ||
+																		Number.isNaN(inputValueAsNumber)
+																	)
+																		field.onChange(inputValue);
+																	else field.onChange(inputValueAsNumber);
+
+																	if (!equallyDivideCheckIsChecked) return;
+
+																	const amountPaidSum =
+																		watchedPurchasersAmountPaid.reduce(
+																			(
+																				accumulator,
+																				currentValue,
+																				currentIndex,
+																			) => {
+																				if (currentIndex === index)
+																					return (
+																						accumulator +
+																						Number(e.target.value ?? 0)
+																					);
+																				return (
+																					accumulator +
+																					Number(currentValue.amountPaid ?? 0)
+																				);
+																			},
+																			0,
+																		);
+
+																	calculateAmountToPay(amountPaidSum);
+																}}
+																placeholder="0"
+																inputMode="numeric"
+															/>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+										</li>
+									))}
+								</ul>
+							</CardContent>
+						</Card>
+
+						<Card>
+							<CardHeader>
+								<CardTitle>割勘金額</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<Switch
+									id="equallyDivideCheck"
+									onCheckedChange={() => {
+										if (equallyDivideCheckIsChecked) return;
+
+										const amountPaidSum = watchedPurchasersAmountPaid.reduce(
+											(accumulator, currentValue) => {
+												return (
+													accumulator + Number(currentValue.amountPaid ?? 0)
+												);
+											},
+											0,
+										);
+
+										calculateAmountToPay(amountPaidSum);
+										setEquallyDivideCheckIsChecked((prev) => !prev);
+									}}
+									checked={equallyDivideCheckIsChecked}
+								/>
+								<Label htmlFor="equallyDivideCheck">等分</Label>
+
+								<ul>
+									{purchasersAmountToPayFields.map((item, index) => (
+										<li key={item.id}>
+											<FormField
+												control={form.control}
+												name={`purchasersAmountToPay.${index}.amountToPay`}
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>{purchaserNames.data[index]}</FormLabel>
+														<FormControl>
+															<Input
+																{...field}
+																onChange={(e) => {
+																	const inputValue = e.target.value;
+																	const inputValueAsNumber = Number(inputValue);
+																	if (
+																		!inputValue ||
+																		Number.isNaN(inputValueAsNumber)
+																	)
+																		field.onChange(e);
+																	else field.onChange(inputValueAsNumber);
+																}}
+																placeholder="0"
+																inputMode="numeric"
+															/>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+										</li>
+									))}
+								</ul>
+							</CardContent>
+						</Card>
+					</>
+				)}
+
+				<Button type="submit">追加</Button>
 			</form>
-		</>
+		</Form>
 	);
 };

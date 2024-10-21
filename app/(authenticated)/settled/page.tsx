@@ -1,20 +1,24 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { TabList } from "../components";
-import { Table } from "./clientComponent";
+import { ServerSettledTable } from "./serverComponents";
 
-export default function PurchaseForm() {
+export default function Settled() {
 	return (
-		<div>
-			<h1>精算済リストページ</h1>
-			<TabList
-				tabItems={[
-					{ label: "入力", href: "/" },
-					{ label: "未精算リスト", href: "/unsettled" },
-					{ label: "精算済リスト", href: "settled" },
-				]}
-			/>
-			<Link href="/">トップページへ</Link>
-			<Table />
-		</div>
+		<Tabs defaultValue="settled" className="w-[400px]">
+			<TabsList>
+				<TabsTrigger value="purchaseForm" asChild>
+					<Link href="/">入力</Link>
+				</TabsTrigger>
+				<TabsTrigger value="unsettled">
+					<Link href="/unsettled">未精算リスト</Link>
+				</TabsTrigger>
+				<TabsTrigger value="settled" asChild>
+					<Link href="/settled">精算済リスト</Link>
+				</TabsTrigger>
+			</TabsList>
+			<TabsContent value="settled">
+				<ServerSettledTable />
+			</TabsContent>
+		</Tabs>
 	);
 }
