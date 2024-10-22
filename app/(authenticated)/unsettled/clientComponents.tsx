@@ -304,6 +304,8 @@ const ControlMenu = ({
 											<Switch
 												id="equallyDivideCheck"
 												onCheckedChange={() => {
+													setEquallyDivideCheckIsChecked((prev) => !prev);
+
 													if (equallyDivideCheckIsChecked) return;
 
 													const amountPaidSum =
@@ -318,7 +320,6 @@ const ControlMenu = ({
 														);
 
 													calculateAmountToPay(amountPaidSum);
-													setEquallyDivideCheckIsChecked((prev) => !prev);
 												}}
 												checked={equallyDivideCheckIsChecked}
 											/>

@@ -695,6 +695,8 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 								<Switch
 									id="equallyDivideCheck"
 									onCheckedChange={() => {
+										setEquallyDivideCheckIsChecked((prev) => !prev);
+
 										if (equallyDivideCheckIsChecked) return;
 
 										const amountPaidSum = watchedPurchasersAmountPaid.reduce(
@@ -707,7 +709,6 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 										);
 
 										calculateAmountToPay(amountPaidSum);
-										setEquallyDivideCheckIsChecked((prev) => !prev);
 									}}
 									checked={equallyDivideCheckIsChecked}
 								/>
