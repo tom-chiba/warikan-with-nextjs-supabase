@@ -306,33 +306,66 @@ type ClientFormProps = {
 	}[];
 };
 
-const purchaseSchema = z.object({
-	title: z.string().min(1, { message: "必須" }),
-	date: z.date().optional(),
-	note: z.string().optional(),
-	purchasersAmountPaid: z.array(
-		z.object({
-			amountPaid: z.union([
-				z
-					.number({ message: "数字じゃないとダメ" })
-					.nonnegative({ message: "0以上の値じゃないとダメ" })
-					.int({ message: "整数じゃないとダメ" }),
-				z.string().length(0, { message: "数字じゃないとダメ" }),
-			]),
-		}),
-	),
-	purchasersAmountToPay: z.array(
-		z.object({
-			amountToPay: z.union([
-				z
-					.number({ message: "数字じゃないとダメ" })
-					.nonnegative({ message: "0以上の値じゃないとダメ" })
-					.int({ message: "整数じゃないとダメ" }),
-				z.string().length(0, { message: "数字じゃないとダメ" }),
-			]),
-		}),
-	),
-});
+const purchaseSchema = z
+	.object({
+		title: z.string().min(1, { message: "必須" }),
+		date: z.date().optional(),
+		note: z.string().optional(),
+		purchasersAmountPaid: z.array(
+			z.object({
+				amountPaid: z.union([
+					z
+						.number({ message: "数字じゃないとダメ" })
+						.nonnegative({ message: "0以上の値じゃないとダメ" })
+						.int({ message: "整数じゃないとダメ" }),
+					z.string().length(0, { message: "数字じゃないとダメ" }),
+				]),
+			}),
+		),
+		purchasersAmountToPay: z.array(
+			z.object({
+				amountToPay: z.union([
+					z
+						.number({ message: "数字じゃないとダメ" })
+						.nonnegative({ message: "0以上の値じゃないとダメ" })
+						.int({ message: "整数じゃないとダメ" }),
+					z.string().length(0, { message: "数字じゃないとダメ" }),
+				]),
+			}),
+		),
+	})
+	.superRefine(({ purchasersAmountPaid, purchasersAmountToPay }, ctx) => {
+		const purchasersAmountPaidSum = purchasersAmountPaid.reduce(
+			(accumulator, currentValue) => {
+				if (typeof currentValue.amountPaid === "string") return accumulator;
+				return accumulator + currentValue.amountPaid;
+			},
+			0,
+		);
+		const purchasersAmountToPaySum = purchasersAmountToPay.reduce(
+			(accumulator, currentValue) => {
+				if (typeof currentValue.amountToPay === "string") return accumulator;
+				return accumulator + currentValue.amountToPay;
+			},
+			0,
+		);
+		purchasersAmountPaid.forEach((_, i) => {
+			if (purchasersAmountPaidSum !== purchasersAmountToPaySum)
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: "支払額と割勘金額の合計が一致していません",
+					path: ["purchasersAmountPaid", i, "amountPaid"],
+				});
+		});
+		purchasersAmountToPay.forEach((_, i) => {
+			if (purchasersAmountPaidSum !== purchasersAmountToPaySum)
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: "支払額と割勘金額の合計が一致していません",
+					path: ["purchasersAmountToPay", i, "amountToPay"],
+				});
+		});
+	});
 
 export const usePurchaseForm = (
 	initialPurchasers: ClientFormProps["initialPurchasers"],
@@ -340,6 +373,7 @@ export const usePurchaseForm = (
 	formDefaultValues?: Required<
 		Parameters<typeof useForm<z.infer<typeof purchaseSchema>>>
 	>[0]["defaultValues"],
+	onSuccessUpdatePurchase?: () => void,
 ) => {
 	const supabase = createClient();
 	const queryClient = useQueryClient();
@@ -449,8 +483,9 @@ export const usePurchaseForm = (
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: ["purchases", "unsettled"],
+				queryKey: ["purchases"],
 			});
+			onSuccessUpdatePurchase?.();
 		},
 		throwOnError: true,
 	});

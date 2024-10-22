@@ -75,6 +75,8 @@ const ControlMenu = ({
 	const supabase = createClient();
 	const queryClient = useQueryClient();
 
+	const [dialogIsOpen, setDialogIsOpen] = useState(false);
+
 	const {
 		calculateAmountToPay,
 		form,
@@ -83,7 +85,9 @@ const ControlMenu = ({
 		purchasersAmountPaidFields,
 		purchasersAmountToPayFields,
 		watchedPurchasersAmountPaid,
-	} = usePurchaseForm(initialPurchasers, purchaseId, purchase);
+	} = usePurchaseForm(initialPurchasers, purchaseId, purchase, () => {
+		setDialogIsOpen(false);
+	});
 
 	const [equallyDivideCheckIsChecked, setEquallyDivideCheckIsChecked] =
 		useState(false);
@@ -115,7 +119,7 @@ const ControlMenu = ({
 	});
 
 	return (
-		<Dialog>
+		<Dialog open={dialogIsOpen} onOpenChange={setDialogIsOpen}>
 			<DropdownMenu>
 				<DropdownMenuTrigger>
 					<Ellipsis />
@@ -128,7 +132,7 @@ const ControlMenu = ({
 					>
 						精算
 					</DropdownMenuItem>
-					<DialogTrigger asChild>
+					<DialogTrigger onClick={() => setDialogIsOpen(true)} asChild>
 						<DropdownMenuItem>編集</DropdownMenuItem>
 					</DialogTrigger>
 					<DropdownMenuItem
@@ -369,13 +373,17 @@ const ControlMenu = ({
 					</Form>
 				</div>
 				<DialogFooter>
+					<Button type="submit" form="purchaseUpdateForm">
+						OK
+					</Button>
 					<DialogClose asChild>
-						<Button type="submit" form="purchaseUpdateForm">
-							OK
-						</Button>
-					</DialogClose>
-					<DialogClose asChild>
-						<Button type="button" onClick={() => form.reset()}>
+						<Button
+							type="button"
+							onClick={() => {
+								form.reset();
+								setDialogIsOpen(false);
+							}}
+						>
 							キャンセル
 						</Button>
 					</DialogClose>
