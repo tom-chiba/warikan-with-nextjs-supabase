@@ -547,6 +547,15 @@ export const usePurchaseForm = (
 
 	const watchedPurchasersAmountPaid = form.watch("purchasersAmountPaid");
 
+	const purchasersAmountPaidSum = watchedPurchasersAmountPaid.reduce(
+		(accumulator, currentValue) =>
+			accumulator +
+			(typeof currentValue.amountPaid === "number"
+				? currentValue.amountPaid
+				: 0),
+		0,
+	);
+
 	return {
 		purchasersCache,
 		purchaserNames,
@@ -557,6 +566,7 @@ export const usePurchaseForm = (
 		handleSubmitUpdate,
 		calculateAmountToPay,
 		watchedPurchasersAmountPaid,
+		purchasersAmountPaidSum,
 	};
 };
 
@@ -573,6 +583,7 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 		handleSubmitCreate,
 		calculateAmountToPay,
 		watchedPurchasersAmountPaid,
+		purchasersAmountPaidSum,
 	} = usePurchaseForm(initialPurchasers);
 
 	return (
@@ -664,7 +675,7 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 							<CardContent>
 								<ul>
 									{purchasersAmountPaidFields.map((item, index) => (
-										<li key={item.id}>
+										<li key={item.id} className="py-4">
 											<FormField
 												control={form.control}
 												name={`purchasersAmountPaid.${index}.amountPaid`}
@@ -751,13 +762,50 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 
 								<ul>
 									{purchasersAmountToPayFields.map((item, index) => (
-										<li key={item.id}>
+										<li key={item.id} className="py-4">
 											<FormField
 												control={form.control}
 												name={`purchasersAmountToPay.${index}.amountToPay`}
 												render={({ field }) => (
 													<FormItem>
-														<FormLabel>{purchaserNames.data[index]}</FormLabel>
+														<div className="flex items-center justify-between">
+															<FormLabel>
+																{purchaserNames.data[index]}
+															</FormLabel>
+															<Button
+																type="button"
+																className="h-8"
+																variant="outline"
+																onClick={() => {
+																	const otherPurchaserAmountToPays = form
+																		.getValues()
+																		.purchasersAmountToPay.reduce(
+																			(
+																				accumulator,
+																				currentValue,
+																				currentIndex,
+																			) => {
+																				if (currentIndex === index)
+																					return accumulator;
+																				return (
+																					accumulator +
+																					(typeof currentValue.amountToPay ===
+																					"number"
+																						? currentValue.amountToPay
+																						: 0)
+																				);
+																			},
+																			0,
+																		);
+																	field.onChange(
+																		purchasersAmountPaidSum -
+																			otherPurchaserAmountToPays,
+																	);
+																}}
+															>
+																残りを自動入力
+															</Button>
+														</div>
 														<FormControl>
 															<Input
 																{...field}
