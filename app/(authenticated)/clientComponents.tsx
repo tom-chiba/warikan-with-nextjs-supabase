@@ -535,14 +535,27 @@ export const usePurchaseForm = (
 		updatePurchaseMutation.mutate(values);
 	};
 
-	const calculateAmountToPay = (amountPaidSum: number) => {
-		const dividedEquallyPurchasersAmountToPay = watchedPurchasersAmountPaid.map(
-			(x) => ({
-				amountToPay: amountPaidSum / watchedPurchasersAmountPaid.length,
-			}),
+	const calculateDistributeRemainderRandomly = (amountPaidSum: number) => {
+		const quotient = Math.floor(
+			amountPaidSum / watchedPurchasersAmountPaid.length,
 		);
+		let remainder = amountPaidSum % watchedPurchasersAmountPaid.length;
 
-		purchasersAmountToPayReplace(dividedEquallyPurchasersAmountToPay);
+		const distribution: { amountToPay: number }[] = [
+			...Array(watchedPurchasersAmountPaid.length),
+		].map(() => ({
+			amountToPay: quotient,
+		}));
+
+		while (remainder > 0) {
+			const randomIndex = Math.floor(
+				Math.random() * watchedPurchasersAmountPaid.length,
+			);
+			distribution[randomIndex].amountToPay += 1;
+			remainder--;
+		}
+
+		purchasersAmountToPayReplace(distribution);
 	};
 
 	const watchedPurchasersAmountPaid = form.watch("purchasersAmountPaid");
@@ -564,7 +577,7 @@ export const usePurchaseForm = (
 		purchasersAmountToPayFields,
 		handleSubmitCreate,
 		handleSubmitUpdate,
-		calculateAmountToPay,
+		calculateDistributeRemainderRandomly: calculateDistributeRemainderRandomly,
 		watchedPurchasersAmountPaid,
 		purchasersAmountPaidSum,
 	};
@@ -581,7 +594,7 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 		purchasersAmountPaidFields,
 		purchasersAmountToPayFields,
 		handleSubmitCreate,
-		calculateAmountToPay,
+		calculateDistributeRemainderRandomly,
 		watchedPurchasersAmountPaid,
 		purchasersAmountPaidSum,
 	} = usePurchaseForm(initialPurchasers);
@@ -717,7 +730,9 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 																			0,
 																		);
 
-																	calculateAmountToPay(amountPaidSum);
+																	calculateDistributeRemainderRandomly(
+																		amountPaidSum,
+																	);
 																}}
 																placeholder="0"
 																inputMode="numeric"
@@ -754,7 +769,7 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 											0,
 										);
 
-										calculateAmountToPay(amountPaidSum);
+										calculateDistributeRemainderRandomly(amountPaidSum);
 									}}
 									checked={equallyDivideCheckIsChecked}
 								/>

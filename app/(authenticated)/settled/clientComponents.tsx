@@ -69,7 +69,7 @@ const ControlMenu = ({
 	const [dialogIsOpen, setDialogIsOpen] = useState(false);
 
 	const {
-		calculateAmountToPay,
+		calculateDistributeRemainderRandomly,
 		form,
 		handleSubmitUpdate,
 		purchaserNames,
@@ -276,7 +276,9 @@ const ControlMenu = ({
 																						0,
 																					);
 
-																				calculateAmountToPay(amountPaidSum);
+																				calculateDistributeRemainderRandomly(
+																					amountPaidSum,
+																				);
 																			}}
 																			placeholder="0"
 																			inputMode="numeric"
@@ -315,7 +317,7 @@ const ControlMenu = ({
 															0,
 														);
 
-													calculateAmountToPay(amountPaidSum);
+													calculateDistributeRemainderRandomly(amountPaidSum);
 												}}
 												checked={equallyDivideCheckIsChecked}
 											/>
