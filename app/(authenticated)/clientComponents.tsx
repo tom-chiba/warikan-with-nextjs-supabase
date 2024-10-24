@@ -315,10 +315,10 @@ const purchaseSchema = z
 			z.object({
 				amountPaid: z.union([
 					z
-						.number({ message: "数字じゃないとダメ" })
-						.nonnegative({ message: "0以上の値じゃないとダメ" })
-						.int({ message: "整数じゃないとダメ" }),
-					z.string().length(0, { message: "数字じゃないとダメ" }),
+						.number({ message: "数字を入力してください" })
+						.nonnegative({ message: "正の値を入力してください" })
+						.int({ message: "整数を入力してください" }),
+					z.string().length(0, { message: "数字を入力してください" }),
 				]),
 			}),
 		),
