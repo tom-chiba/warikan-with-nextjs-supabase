@@ -4,7 +4,7 @@ import { ServerForm } from "./serverComponents";
 
 export default function Index() {
 	return (
-		<Tabs defaultValue="purchaseForm" className="w-[400px]">
+		<Tabs defaultValue="purchaseForm">
 			<TabsList>
 				<TabsTrigger value="purchaseForm" asChild>
 					<Link href="/">入力</Link>

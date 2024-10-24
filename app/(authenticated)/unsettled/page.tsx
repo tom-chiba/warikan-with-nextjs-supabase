@@ -4,7 +4,7 @@ import { ServerUnsettledBlock } from "./serverComponents";
 
 export default function Unsettled() {
 	return (
-		<Tabs defaultValue="unsettled" className="w-[400px]">
+		<Tabs defaultValue="unsettled">
 			<TabsList>
 				<TabsTrigger value="purchaseForm" asChild>
 					<Link href="/">入力</Link>

@@ -4,7 +4,7 @@ import { ServerSettledTable } from "./serverComponents";
 
 export default function Settled() {
 	return (
-		<Tabs defaultValue="settled" className="w-[400px]">
+		<Tabs defaultValue="settled">
 			<TabsList>
 				<TabsTrigger value="purchaseForm" asChild>
 					<Link href="/">入力</Link>
