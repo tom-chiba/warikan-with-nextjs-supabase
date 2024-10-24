@@ -510,9 +510,9 @@ export const usePurchaseForm = (
 			date: new Date(),
 			note: "",
 			purchasersAmountPaid:
-				purchaserNames.data?.map((x) => ({ amountPaid: 0 })) ?? [],
+				purchaserNames.data?.map(() => ({ amountPaid: 0 })) ?? [],
 			purchasersAmountToPay:
-				purchaserNames.data?.map((x) => ({ amountToPay: 0 })) ?? [],
+				purchaserNames.data?.map(() => ({ amountToPay: 0 })) ?? [],
 		},
 	});
 
