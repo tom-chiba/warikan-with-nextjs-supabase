@@ -577,7 +577,7 @@ export const usePurchaseForm = (
 		purchasersAmountToPayFields,
 		handleSubmitCreate,
 		handleSubmitUpdate,
-		calculateDistributeRemainderRandomly: calculateDistributeRemainderRandomly,
+		calculateDistributeRemainderRandomly,
 		watchedPurchasersAmountPaid,
 		purchasersAmountPaidSum,
 	};
