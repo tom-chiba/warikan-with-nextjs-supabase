@@ -118,6 +118,7 @@ const ControlMenu = ({
 				</DropdownMenuTrigger>
 				<DropdownMenuContent>
 					<DropdownMenuItem
+						className="h-12"
 						onClick={() =>
 							purchaseId && unsettlePurchaseMutation.mutate(purchaseId)
 						}
@@ -125,9 +126,10 @@ const ControlMenu = ({
 						未精算
 					</DropdownMenuItem>
 					<DialogTrigger onClick={() => setDialogIsOpen(true)} asChild>
-						<DropdownMenuItem>編集</DropdownMenuItem>
+						<DropdownMenuItem className="h-12">編集</DropdownMenuItem>
 					</DialogTrigger>
 					<DropdownMenuItem
+						className="h-12"
 						onClick={() =>
 							purchaseId && deletePurchaseMutation.mutate(purchaseId)
 						}
