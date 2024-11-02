@@ -600,12 +600,26 @@ const UnsettledTable = ({
 };
 
 type ClientUnsettledBlockProps = {
+	initialPurchases: {
+		id: number;
+		title: string;
+		purchase_date: string | null;
+		note: string;
+		is_settled: boolean;
+		purchasers_purchases: {
+			id: number;
+			purchaser_id: number;
+			amount_paid: number | null;
+			amount_to_pay: number | null;
+		}[];
+	}[];
 	initialPurchasers: {
 		id: number;
 		name: string;
 	}[];
 };
 export const ClientUnsettledBlock = ({
+	initialPurchases,
 	initialPurchasers,
 }: ClientUnsettledBlockProps) => {
 	const supabase = createClient();
@@ -647,6 +661,7 @@ export const ClientUnsettledBlock = ({
 
 			return purchasesData;
 		},
+		initialData: initialPurchases,
 	});
 
 	const settlePurchasesMutation = useMutation({
