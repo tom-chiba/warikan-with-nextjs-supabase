@@ -1,10 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { ServerUnsettledBlock } from "./serverComponents";
+import { ServerPurchasersTable } from "./serverComponents";
 
-export default function Unsettled() {
+export default function Settled() {
 	return (
-		<Tabs defaultValue="unsettled">
+		<Tabs defaultValue="member">
 			<TabsList>
 				<TabsTrigger value="purchaseForm" asChild>
 					<Link href="/">入力</Link>
@@ -19,8 +19,8 @@ export default function Unsettled() {
 					<Link href="/member">メンバー管理</Link>
 				</TabsTrigger>
 			</TabsList>
-			<TabsContent value="unsettled">
-				<ServerUnsettledBlock />
+			<TabsContent value="member">
+				<ServerPurchasersTable />
 			</TabsContent>
 		</Tabs>
 	);

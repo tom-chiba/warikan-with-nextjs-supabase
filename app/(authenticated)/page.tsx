@@ -15,6 +15,9 @@ export default function Index() {
 				<TabsTrigger value="settled" asChild>
 					<Link href="/settled">精算済リスト</Link>
 				</TabsTrigger>
+				<TabsTrigger value="member" asChild>
+					<Link href="/member">メンバー管理</Link>
+				</TabsTrigger>
 			</TabsList>
 			<TabsContent value="purchaseForm">
 				<ServerForm />
