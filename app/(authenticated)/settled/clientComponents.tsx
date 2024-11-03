@@ -142,7 +142,7 @@ const ControlMenu = ({
 				<DialogHeader>
 					<DialogTitle>購入品情報編集</DialogTitle>
 				</DialogHeader>
-				<div className="overflow-auto h-96">
+				<div className="overflow-auto h-96 px-1">
 					<Form {...form}>
 						<form
 							id="purchaseUpdateForm"
