@@ -18,7 +18,7 @@ export const ServerUnsettledBlock = async () => {
 			`,
 		)
 		.eq("is_settled", true)
-		.order("created_at", { ascending: true });
+		.order("purchase_date", { ascending: false });
 
 	const { data: purchasersData, error: purchasersError } = await supabase
 		.from("purchasers")

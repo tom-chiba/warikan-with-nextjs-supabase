@@ -436,11 +436,25 @@ const ControlMenu = ({
 type UnsettledTableProps = {
 	selectedPurchaseIds: number[];
 	onSelectPurchase: (targetId: number) => void;
+	initialPurchases: {
+		id: number;
+		title: string;
+		purchase_date: string | null;
+		note: string;
+		is_settled: boolean;
+		purchasers_purchases: {
+			id: number;
+			purchaser_id: number;
+			amount_paid: number | null;
+			amount_to_pay: number | null;
+		}[];
+	}[];
 	initialPurchasers: ComponentProps<typeof ControlMenu>["initialPurchasers"];
 };
 const UnsettledTable = ({
 	selectedPurchaseIds,
 	onSelectPurchase,
+	initialPurchases,
 	initialPurchasers,
 }: UnsettledTableProps) => {
 	const supabase = createClient();
@@ -462,11 +476,12 @@ const UnsettledTable = ({
 				`,
 				)
 				.eq("is_settled", false)
-				.order("created_at", { ascending: true });
+				.order("purchase_date", { ascending: false });
 			if (purchasesError) throw new Error(purchasesError.message);
 
 			return purchasesData;
 		},
+		initialData: initialPurchases,
 	});
 	const purchaseTableData: UseQueryDataAndStatus<
 		{
@@ -485,23 +500,21 @@ const UnsettledTable = ({
 	> =
 		purchasesCache.status === "error"
 			? { status: "error", data: undefined, isRefetching: false }
-			: purchasesCache.status === "pending"
-				? { status: "pending", data: undefined, isRefetching: false }
-				: {
-						status: "success",
-						data: purchasesCache.data.map((x) => ({
-							id: x.id,
-							title: x.title,
-							date: x.purchase_date ?? undefined,
-							note: x.note,
-							purchasers: x.purchasers_purchases,
-							totalAmount: x.purchasers_purchases.reduce(
-								(previous, current) => previous + (current.amount_paid ?? 0),
-								0,
-							),
-						})),
-						isRefetching: false,
-					};
+			: {
+					status: "success",
+					data: purchasesCache.data.map((x) => ({
+						id: x.id,
+						title: x.title,
+						date: x.purchase_date ?? undefined,
+						note: x.note,
+						purchasers: x.purchasers_purchases,
+						totalAmount: x.purchasers_purchases.reduce(
+							(previous, current) => previous + (current.amount_paid ?? 0),
+							0,
+						),
+					})),
+					isRefetching: false,
+				};
 
 	const deletePurchaseMutation = useMutation({
 		mutationFn: async (purchaseId: number) => {
@@ -540,8 +553,7 @@ const UnsettledTable = ({
 			deletePurchaseMutation.status === "error" ||
 			settlePurchaseMutation.status === "error" ? (
 				<ErrorMessage />
-			) : purchaseTableData.status === "pending" ||
-				deletePurchaseMutation.status === "pending" ||
+			) : deletePurchaseMutation.status === "pending" ||
 				settlePurchaseMutation.status === "pending" ? (
 				<Loader isLoading />
 			) : purchaseTableData.data.length === 0 ? (
@@ -642,7 +654,7 @@ export const ClientUnsettledBlock = ({
 	});
 
 	const purchasesCache = useQuery({
-		queryKey: ["purchases"],
+		queryKey: ["purchases", "unsettled"],
 		queryFn: async () => {
 			const { data: purchasesData, error: purchasesError } = await supabase
 				.from("purchases")
@@ -656,7 +668,7 @@ export const ClientUnsettledBlock = ({
 				`,
 				)
 				.eq("is_settled", false)
-				.order("created_at", { ascending: true });
+				.order("purchase_date", { ascending: false });
 			if (purchasesError) throw new Error(purchasesError.message);
 
 			return purchasesData;
@@ -734,6 +746,7 @@ export const ClientUnsettledBlock = ({
 						return alreadyIncludes ? [...prev, targetId] : prevWithoutTarget;
 					});
 				}}
+				initialPurchases={initialPurchases}
 				initialPurchasers={initialPurchasers}
 			/>
 		</>

@@ -466,7 +466,7 @@ export const ClientSettledTable = ({
 				`,
 				)
 				.eq("is_settled", true)
-				.order("created_at", { ascending: true });
+				.order("purchase_date", { ascending: false });
 			if (purchasesError) throw new Error(purchasesError.message);
 
 			return purchasesData;
