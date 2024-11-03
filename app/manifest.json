@@ -1,0 +1,7 @@
+{
+	"name": "warikan",
+	"short_name": "warikan",
+	"description": "An application built with Next.js",
+	"start_url": "/",
+	"display": "standalone"
+}
