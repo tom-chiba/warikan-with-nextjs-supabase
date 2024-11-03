@@ -435,7 +435,7 @@ const ControlMenu = ({
 
 type UnsettledTableProps = {
 	selectedPurchaseIds: number[];
-	onSelectPurchase: (targetId: number) => void;
+	onSelectPurchases: (newSelectedPurchaseIds: number[]) => void;
 	initialPurchases: {
 		id: number;
 		title: string;
@@ -453,7 +453,7 @@ type UnsettledTableProps = {
 };
 const UnsettledTable = ({
 	selectedPurchaseIds,
-	onSelectPurchase,
+	onSelectPurchases,
 	initialPurchases,
 	initialPurchasers,
 }: UnsettledTableProps) => {
@@ -516,6 +516,17 @@ const UnsettledTable = ({
 					isRefetching: false,
 				};
 
+	const getAllPurchaseIds = (
+		purchasesCacheData: (typeof purchasesCache)["data"],
+	): number[] => purchasesCacheData.map((x) => x.id);
+
+	const getAllPurchasesAreChecked = (
+		purchasesCacheData: (typeof purchasesCache)["data"],
+	): boolean =>
+		getAllPurchaseIds(purchasesCacheData).every((x) =>
+			selectedPurchaseIds.includes(x),
+		);
+
 	const deletePurchaseMutation = useMutation({
 		mutationFn: async (purchaseId: number) => {
 			const { error } = await supabase
@@ -563,7 +574,18 @@ const UnsettledTable = ({
 					<Table>
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-[20px]" />
+								<TableHead className="w-[20px]">
+									<Checkbox
+										checked={getAllPurchasesAreChecked(purchasesCache.data)}
+										onCheckedChange={() =>
+											onSelectPurchases(
+												getAllPurchasesAreChecked(purchasesCache.data)
+													? []
+													: getAllPurchaseIds(purchasesCache.data),
+											)
+										}
+									/>
+								</TableHead>
 								<TableHead>購入品名</TableHead>
 								<TableHead>購入日</TableHead>
 								<TableHead>合計金額(円)</TableHead>
@@ -576,7 +598,19 @@ const UnsettledTable = ({
 									<TableCell>
 										<Checkbox
 											checked={selectedPurchaseIds.includes(purchase.id)}
-											onCheckedChange={() => onSelectPurchase(purchase.id)}
+											onCheckedChange={() => {
+												if (selectedPurchaseIds.includes(purchase.id))
+													onSelectPurchases(
+														selectedPurchaseIds.filter(
+															(x) => x !== purchase.id,
+														),
+													);
+												else
+													onSelectPurchases([
+														...selectedPurchaseIds,
+														purchase.id,
+													]);
+											}}
 										/>
 									</TableCell>
 									<TableCell>{purchase.title}</TableCell>
@@ -739,13 +773,9 @@ export const ClientUnsettledBlock = ({
 
 			<UnsettledTable
 				selectedPurchaseIds={selectedPurchaseIds}
-				onSelectPurchase={(targetId) => {
-					setSelectedPurchaseIds((prev) => {
-						const prevWithoutTarget = prev.filter((x) => x !== targetId);
-						const alreadyIncludes = prevWithoutTarget.length === prev.length;
-						return alreadyIncludes ? [...prev, targetId] : prevWithoutTarget;
-					});
-				}}
+				onSelectPurchases={(newSelectedPurchaseIds) =>
+					setSelectedPurchaseIds(newSelectedPurchaseIds)
+				}
 				initialPurchases={initialPurchases}
 				initialPurchasers={initialPurchasers}
 			/>
