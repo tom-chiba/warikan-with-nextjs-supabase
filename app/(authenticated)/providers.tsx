@@ -1,11 +1,14 @@
 "use client";
 
+import Loader from "@/components/clients/Loader";
 import {
 	QueryClient,
 	QueryClientProvider,
 	isServer,
+	useIsMutating,
 } from "@tanstack/react-query";
 import { ReactQueryStreamedHydration } from "@tanstack/react-query-next-experimental";
+import type { ReactNode } from "react";
 
 function makeQueryClient() {
 	return new QueryClient({
@@ -28,13 +31,19 @@ function getQueryClient() {
 	return browserQueryClient;
 }
 
-export function Providers(props: { children: React.ReactNode }) {
+function Child({ children }: { children: ReactNode }) {
+	const isMutating = useIsMutating();
+
+	return isMutating ? <Loader isLoading /> : children;
+}
+
+export function Providers(props: { children: ReactNode }) {
 	const queryClient = getQueryClient();
 
 	return (
 		<QueryClientProvider client={queryClient}>
 			<ReactQueryStreamedHydration>
-				{props.children}
+				<Child>{props.children}</Child>
 			</ReactQueryStreamedHydration>
 		</QueryClientProvider>
 	);
