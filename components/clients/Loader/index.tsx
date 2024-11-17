@@ -18,7 +18,7 @@ const Loader = ({ isLoading }: Props) => {
 		};
 	}, [isLoading]);
 
-	if (!isLoading) return undefined;
+	if (!isLoading) return null;
 
 	return (
 		<div
