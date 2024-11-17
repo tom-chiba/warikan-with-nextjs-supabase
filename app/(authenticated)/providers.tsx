@@ -34,7 +34,12 @@ function getQueryClient() {
 function Child({ children }: { children: ReactNode }) {
 	const isMutating = useIsMutating();
 
-	return isMutating ? <Loader isLoading /> : children;
+	return (
+		<>
+			{children}
+			<Loader isLoading={!!isMutating} />
+		</>
+	);
 }
 
 export function Providers(props: { children: ReactNode }) {
