@@ -1,59 +1,31 @@
-import { createClient } from "@/utils/supabase/server";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
+import Loader from "@/components/clients/Loader";
+import { useTransition } from "react";
+import { signIn, signUp } from "./serverActions";
 
 export default function Login({
 	searchParams,
 }: {
 	searchParams: { message: string };
 }) {
-	const signIn = async (formData: FormData) => {
-		"use server";
+	const [isPending, startTransition] = useTransition();
 
-		const email = formData.get("email") as string;
-		const password = formData.get("password") as string;
-		const supabase = createClient();
-
-		const { error } = await supabase.auth.signInWithPassword({
-			email,
-			password,
+	const handleSignIn = async (formData: FormData) => {
+		startTransition(() => {
+			signIn(formData);
 		});
-
-		if (error) {
-			return redirect("/login?message=Could not authenticate user");
-		}
-
-		return redirect("/");
 	};
-
-	const signUp = async (formData: FormData) => {
-		"use server";
-
-		const origin = headers().get("origin");
-		const email = formData.get("email") as string;
-		const password = formData.get("password") as string;
-		const supabase = createClient();
-
-		const { error } = await supabase.auth.signUp({
-			email,
-			password,
-			options: {
-				emailRedirectTo: `${origin}/auth/callback`,
-			},
+	const handleSignUp = async (formData: FormData) => {
+		startTransition(() => {
+			signUp(formData);
 		});
-
-		if (error) {
-			return redirect("/login?message=Could not authenticate user");
-		}
-
-		return redirect("/login?message=Check email to continue sign in process");
 	};
 
 	return (
 		<div className="flex-1 flex flex-col w-full px-8 sm:max-w-md justify-center gap-2">
 			<form
 				className="animate-in flex-1 flex flex-col w-full justify-center gap-2 text-foreground"
-				action={signIn}
+				action={handleSignIn}
 			>
 				<label className="text-md" htmlFor="email">
 					Email
@@ -82,7 +54,7 @@ export default function Login({
 				</button>
 				<button
 					type="submit"
-					formAction={signUp}
+					formAction={handleSignUp}
 					className="border border-foreground/20 rounded-md px-4 py-2 text-foreground mb-2"
 				>
 					Sign Up
@@ -93,6 +65,7 @@ export default function Login({
 					</p>
 				)}
 			</form>
+			<Loader isLoading={isPending} />
 		</div>
 	);
 }
