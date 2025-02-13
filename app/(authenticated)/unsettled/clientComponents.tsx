@@ -76,6 +76,7 @@ const ControlMenu = ({
 	const queryClient = useQueryClient();
 
 	const [dialogIsOpen, setDialogIsOpen] = useState(false);
+	const [dateInputPopoverIsOpen, setDateInputPopoverIsOpen] = useState(false);
 
 	const {
 		calculateDistributeRemainderRandomly,
@@ -178,7 +179,10 @@ const ControlMenu = ({
 								render={({ field }) => (
 									<FormItem className="flex flex-col">
 										<FormLabel>購入日</FormLabel>
-										<Popover>
+										<Popover
+											open={dateInputPopoverIsOpen}
+											onOpenChange={setDateInputPopoverIsOpen}
+										>
 											<PopoverTrigger asChild>
 												<FormControl>
 													<Button
@@ -201,7 +205,11 @@ const ControlMenu = ({
 												<Calendar
 													mode="single"
 													selected={field.value}
-													onSelect={field.onChange}
+													onSelect={(date) => {
+														field.onChange(date);
+														setDateInputPopoverIsOpen(false);
+													}}
+													required
 													disabled={(date) =>
 														date > new Date() || date < new Date("1900-01-01")
 													}

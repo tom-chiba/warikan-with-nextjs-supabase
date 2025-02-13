@@ -320,6 +320,7 @@ export const usePurchaseForm = (
 export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 	const [equallyDivideCheckIsChecked, setEquallyDivideCheckIsChecked] =
 		useState(false);
+	const [dateInputPopoverIsOpen, setDateInputPopoverIsOpen] = useState(false);
 
 	const {
 		purchaserNames,
@@ -358,7 +359,10 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 					render={({ field }) => (
 						<FormItem className="flex flex-col">
 							<FormLabel>購入日</FormLabel>
-							<Popover>
+							<Popover
+								open={dateInputPopoverIsOpen}
+								onOpenChange={setDateInputPopoverIsOpen}
+							>
 								<PopoverTrigger asChild>
 									<FormControl>
 										<Button
@@ -381,7 +385,11 @@ export const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 									<Calendar
 										mode="single"
 										selected={field.value}
-										onSelect={field.onChange}
+										onSelect={(date) => {
+											field.onChange(date);
+											setDateInputPopoverIsOpen(false);
+										}}
+										required
 										disabled={(date) =>
 											date > new Date() || date < new Date("1900-01-01")
 										}
