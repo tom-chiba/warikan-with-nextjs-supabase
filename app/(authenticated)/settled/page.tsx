@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { ServerSettledTable } from "./serverComponents";
+import ServerSettledTable from "./_components/ServerSettledTable";
 
 export default function Settled() {
 	return (

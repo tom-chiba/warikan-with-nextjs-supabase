@@ -1,8 +1,8 @@
 import NodataMessage from "@/components/NodataMessage";
 import { createClient } from "@/utils/supabase/server";
-import { ClientSettledTable } from "./clientComponents";
+import ClientSettledTable from "./ClientSettledTable";
 
-export const ServerSettledTable = async () => {
+const ServerSettledTable = async () => {
 	const supabase = createClient();
 
 	const { data: purchasesData, error: purchasesError } = await supabase
@@ -38,3 +38,4 @@ export const ServerSettledTable = async () => {
 		/>
 	);
 };
+export default ServerSettledTable;
