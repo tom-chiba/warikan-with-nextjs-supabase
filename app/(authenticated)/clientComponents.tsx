@@ -23,7 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import {} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
-import type { UseQueryDataAndStatus } from "@/utils/supabase/types";
+import type { UseQueryDataAndStatus } from "@/utils/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {} from "@mdi/js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

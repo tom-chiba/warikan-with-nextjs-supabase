@@ -54,7 +54,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
-import type { UseQueryDataAndStatus } from "@/utils/supabase/types";
+import type { UseQueryDataAndStatus } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CalendarIcon, Ellipsis } from "lucide-react";
