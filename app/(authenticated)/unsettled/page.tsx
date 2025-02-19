@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { ServerUnsettledBlock } from "./serverComponents";
+import { ServerUnsettledBlock } from "./_components/ServerUnsettledBlock";
 
 export default function Unsettled() {
 	return (

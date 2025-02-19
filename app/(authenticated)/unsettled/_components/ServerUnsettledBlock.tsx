@@ -1,6 +1,6 @@
 import NodataMessage from "@/components/NodataMessage";
 import { createClient } from "@/utils/supabase/server";
-import { ClientUnsettledBlock } from "./clientComponents";
+import ClientUnsettledBlock from "./ClientUnsettledBlock";
 
 export const ServerUnsettledBlock = async () => {
 	const supabase = createClient();
