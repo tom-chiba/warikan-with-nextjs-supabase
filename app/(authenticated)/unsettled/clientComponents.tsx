@@ -59,7 +59,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CalendarIcon, Ellipsis } from "lucide-react";
 import { type ComponentProps, useEffect, useState } from "react";
-import { usePurchaseForm } from "../clientComponents";
+import usePurchaseForm from "../_hooks/usePurchaseForm";
 
 type ControlMenuProps = {
 	initialPurchasers: Parameters<typeof usePurchaseForm>[0];

@@ -1,8 +1,8 @@
 import NodataMessage from "@/components/NodataMessage";
 import { createClient } from "@/utils/supabase/server";
-import { ClientForm } from "./clientComponents";
+import ClientForm from "./ClientForm";
 
-export const ServerForm = async () => {
+const ServerForm = async () => {
 	const supabase = createClient();
 
 	const { data: purchasers, error } = await supabase
@@ -15,3 +15,4 @@ export const ServerForm = async () => {
 
 	return <ClientForm initialPurchasers={purchasers} />;
 };
+export default ServerForm;
