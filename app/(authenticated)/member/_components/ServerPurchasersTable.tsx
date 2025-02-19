@@ -1,8 +1,8 @@
 import NodataMessage from "@/components/NodataMessage";
 import { createClient } from "@/utils/supabase/server";
-import { ClientPurchasersTable } from "./clientComponents";
+import ClientPurchasersTable from "./ClientPurchasersTable";
 
-export const ServerPurchasersTable = async () => {
+const ServerPurchasersTable = async () => {
 	const supabase = createClient();
 
 	const { data: purchasers, error } = await supabase
@@ -15,3 +15,4 @@ export const ServerPurchasersTable = async () => {
 
 	return <ClientPurchasersTable initialPurchasers={purchasers} />;
 };
+export default ServerPurchasersTable;

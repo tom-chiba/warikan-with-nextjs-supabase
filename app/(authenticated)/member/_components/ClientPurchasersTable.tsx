@@ -1,11 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {} from "@/components/ui/card";
-import {} from "@/components/ui/dialog";
-import {} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {} from "@/components/ui/popover";
 import {
 	Table,
 	TableBody,
@@ -16,11 +12,9 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { createClient } from "@/utils/supabase/client";
-import {} from "@mdi/js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Edit, Trash, X } from "lucide-react";
 import { useState } from "react";
-import {} from "react-hook-form";
 
 type ClientPurchasersTableProps = {
 	initialPurchasers: {
@@ -28,7 +22,7 @@ type ClientPurchasersTableProps = {
 		name: string;
 	}[];
 };
-export const ClientPurchasersTable = ({
+const ClientPurchasersTable = ({
 	initialPurchasers,
 }: ClientPurchasersTableProps) => {
 	const supabase = createClient();
@@ -244,3 +238,4 @@ export const ClientPurchasersTable = ({
 		</Table>
 	);
 };
+export default ClientPurchasersTable;
