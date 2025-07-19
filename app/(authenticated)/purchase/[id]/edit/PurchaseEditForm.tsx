@@ -1,5 +1,6 @@
 "use client";
 
+import usePurchaseForm from "@/app/(authenticated)/_hooks/usePurchaseForm";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,36 +23,42 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import usePurchaseForm from "../_hooks/usePurchaseForm";
 
-export type ClientFormProps = {
-	initialPurchasers: {
-		id: number;
-		name: string;
-	}[];
+type PurchaseEditFormProps = {
+	purchaseId: number;
+	initialPurchasers: Parameters<typeof usePurchaseForm>[0];
+	initialPurchase: Parameters<typeof usePurchaseForm>[2];
 };
 
-const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
-	const [equallyDivideCheckIsChecked, setEquallyDivideCheckIsChecked] =
-		useState(true);
+const PurchaseEditForm = ({
+	purchaseId,
+	initialPurchasers,
+	initialPurchase,
+}: PurchaseEditFormProps) => {
+	const router = useRouter();
 	const [dateInputPopoverIsOpen, setDateInputPopoverIsOpen] = useState(false);
+	const [equallyDivideCheckIsChecked, setEquallyDivideCheckIsChecked] =
+		useState(false);
 
 	const {
-		purchaserNames,
+		calculateDistributeRemainderRandomly,
 		form,
+		handleSubmitUpdate,
+		purchaserNames,
 		purchasersAmountPaidFields,
 		purchasersAmountToPayFields,
-		handleSubmitCreate,
-		calculateDistributeRemainderRandomly,
 		watchedPurchasersAmountPaid,
 		purchasersAmountPaidSum,
-	} = usePurchaseForm(initialPurchasers);
+	} = usePurchaseForm(initialPurchasers, purchaseId, initialPurchase, () =>
+		router.push("/unsettled"),
+	);
 
 	return (
 		<Form {...form}>
 			<form
-				onSubmit={form.handleSubmit(handleSubmitCreate)}
+				onSubmit={form.handleSubmit(handleSubmitUpdate)}
 				className="space-y-8"
 			>
 				<FormField
@@ -142,7 +149,7 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 							<CardContent>
 								<ul>
 									{purchasersAmountPaidFields.map((item, index) => (
-										<li key={item.id} className="py-4">
+										<li key={item.id}>
 											<FormField
 												control={form.control}
 												name={`purchasersAmountPaid.${index}.amountPaid`}
@@ -303,10 +310,10 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 						</Card>
 					</>
 				)}
-
-				<Button type="submit">追加</Button>
+				<Button type="submit">更新</Button>
 			</form>
 		</Form>
 	);
 };
-export default ClientForm;
+
+export default PurchaseEditForm;
