@@ -34,7 +34,7 @@ export type ClientFormProps = {
 
 const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 	const [equallyDivideCheckIsChecked, setEquallyDivideCheckIsChecked] =
-		useState(false);
+		useState(true);
 	const [dateInputPopoverIsOpen, setDateInputPopoverIsOpen] = useState(false);
 
 	const {
