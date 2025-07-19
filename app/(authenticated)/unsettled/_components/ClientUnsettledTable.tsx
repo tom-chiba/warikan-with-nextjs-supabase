@@ -204,23 +204,7 @@ const ClientUnsettledTable = ({
 									<TableCell>{purchase.date}</TableCell>
 									<TableCell>{purchase.totalAmount}</TableCell>
 									<TableCell>
-										<ClientControlMenu
-											initialPurchasers={initialPurchasers}
-											purchaseId={purchase.id}
-											purchase={{
-												title: purchase.title,
-												date: purchase.date
-													? new Date(purchase.date)
-													: undefined,
-												note: purchase.note,
-												purchasersAmountPaid: purchase.purchasers.map((x) => ({
-													amountPaid: x.amount_paid ?? 0,
-												})),
-												purchasersAmountToPay: purchase.purchasers.map((x) => ({
-													amountToPay: x.amount_to_pay ?? 0,
-												})),
-											}}
-										/>
+										<ClientControlMenu purchaseId={purchase.id} />
 									</TableCell>
 								</TableRow>
 							))}
