@@ -29,14 +29,9 @@ type ClientUnsettledBlockProps = {
 			amount_to_pay: number | null;
 		}[];
 	}[];
-	initialPurchasers: {
-		id: number;
-		name: string;
-	}[];
 };
 const ClientUnsettledBlock = ({
 	initialPurchases,
-	initialPurchasers,
 }: ClientUnsettledBlockProps) => {
 	const supabase = createClient();
 	const queryClient = useQueryClient();
@@ -54,7 +49,6 @@ const ClientUnsettledBlock = ({
 
 			return purchasers;
 		},
-		initialData: initialPurchasers,
 	});
 
 	const purchasesCache = useQuery({
@@ -106,7 +100,7 @@ const ClientUnsettledBlock = ({
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{purchasersCache.data.map((purchaser) => (
+							{purchasersCache.data?.map((purchaser) => (
 								<TableRow key={purchaser.id}>
 									<TableCell className="font-medium">
 										{purchaser.name}
@@ -147,7 +141,6 @@ const ClientUnsettledBlock = ({
 					setSelectedPurchaseIds(newSelectedPurchaseIds)
 				}
 				initialPurchases={initialPurchases}
-				initialPurchasers={initialPurchasers}
 			/>
 		</>
 	);

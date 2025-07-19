@@ -15,7 +15,7 @@ import {
 import { createClient } from "@/utils/supabase/client";
 import type { UseQueryDataAndStatus } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ComponentProps, useEffect } from "react";
+import { useEffect } from "react";
 import ClientControlMenu from "./ClientControlMenu";
 
 type ClientUnsettledTableProps = {
@@ -34,15 +34,11 @@ type ClientUnsettledTableProps = {
 			amount_to_pay: number | null;
 		}[];
 	}[];
-	initialPurchasers: ComponentProps<
-		typeof ClientControlMenu
-	>["initialPurchasers"];
 };
 const ClientUnsettledTable = ({
 	selectedPurchaseIds,
 	onSelectPurchases,
 	initialPurchases,
-	initialPurchasers,
 }: ClientUnsettledTableProps) => {
 	const supabase = createClient();
 	const queryClient = useQueryClient();

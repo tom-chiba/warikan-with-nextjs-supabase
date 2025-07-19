@@ -17,24 +17,12 @@ export const ServerUnsettledBlock = async () => {
 				purchasers_purchases ( id, purchaser_id, amount_paid, amount_to_pay )
 			`,
 		)
-		.eq("is_settled", true)
+		.eq("is_settled", false)
 		.order("purchase_date", { ascending: false });
 
-	const { data: purchasersData, error: purchasersError } = await supabase
-		.from("purchasers")
-		.select("id, name")
-		.order("created_at", { ascending: true });
-
 	if (purchasesError) throw new Error(purchasesError.message);
-	if (purchasersError) throw new Error(purchasersError.message);
 
 	if (!purchasesData) return <NodataMessage />;
-	if (!purchasersData) return <NodataMessage />;
 
-	return (
-		<ClientUnsettledBlock
-			initialPurchases={purchasesData}
-			initialPurchasers={purchasersData}
-		/>
-	);
+	return <ClientUnsettledBlock initialPurchases={purchasesData} />;
 };
