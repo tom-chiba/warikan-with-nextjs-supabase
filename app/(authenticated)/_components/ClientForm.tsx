@@ -285,7 +285,7 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 																		!inputValue ||
 																		Number.isNaN(inputValueAsNumber)
 																	)
-																		field.onChange(e);
+																		field.onChange(inputValue);
 																	else field.onChange(inputValueAsNumber);
 																}}
 																placeholder="0"
