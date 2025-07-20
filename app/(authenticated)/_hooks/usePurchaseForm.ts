@@ -3,6 +3,7 @@ import type { UseQueryDataAndStatus } from "@/utils/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import type { ClientFormProps } from "../_components/ClientForm";
 
@@ -134,7 +135,10 @@ const usePurchaseForm = (
 					`処理に失敗しました。purchases tableからid=${insertedPurchaseData.id}に紐づく行を削除してください。`,
 				);
 		},
-		onSuccess: () => form.reset(),
+		onSuccess: () => {
+			form.reset();
+			toast.success("購入品を追加しました");
+		},
 		throwOnError: true,
 	});
 	const updatePurchaseMutation = useMutation({
@@ -186,6 +190,7 @@ const usePurchaseForm = (
 				queryKey: ["purchases"],
 			});
 			onSuccessUpdatePurchase?.();
+			toast.success("購入品を更新しました");
 		},
 		throwOnError: true,
 	});
