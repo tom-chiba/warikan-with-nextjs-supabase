@@ -1,5 +1,6 @@
 import AuthButton from "@/components/AuthButton";
 import { Separator } from "@/components/ui/separator";
+import { Toaster } from "@/components/ui/sonner";
 import { Providers } from "./providers";
 
 export default function RootLayout({
@@ -12,6 +13,7 @@ export default function RootLayout({
 			<AuthButton />
 			<Separator className="my-2" />
 			{children}
+			<Toaster />
 		</Providers>
 	);
 }
