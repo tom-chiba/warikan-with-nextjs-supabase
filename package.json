@@ -52,7 +52,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
-    "@google/gemini-cli": "^0.1.13",
+    "@google/gemini-cli": "^0.1.14",
     "@playwright/test": "^1.54.1",
     "@types/node": "20.11.5",
     "@types/react": "18.2.48",
