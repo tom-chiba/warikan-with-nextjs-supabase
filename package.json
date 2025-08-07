@@ -8,7 +8,8 @@
     "biome:check": "biome check .",
     "biome:format": "biome check --write .",
     "check": "run-s tsc biome:check",
-    "gemini": "gemini"
+    "gemini": "gemini",
+    "test": "playwright test"
   },
   "dependencies": {
     "@conform-to/react": "^1.1.5",
