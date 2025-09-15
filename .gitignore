@@ -39,8 +39,8 @@ next-env.d.ts
 .gemini/
 
 # Playwright
-node_modules/
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+tests-e2e/.auth/user.json

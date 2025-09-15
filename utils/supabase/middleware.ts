@@ -25,11 +25,6 @@ export const createClient = (request: NextRequest) => {
 						value,
 						...options,
 					});
-					response = NextResponse.next({
-						request: {
-							headers: request.headers,
-						},
-					});
 					response.cookies.set({
 						name,
 						value,
@@ -42,11 +37,6 @@ export const createClient = (request: NextRequest) => {
 						name,
 						value: "",
 						...options,
-					});
-					response = NextResponse.next({
-						request: {
-							headers: request.headers,
-						},
 					});
 					response.cookies.set({
 						name,

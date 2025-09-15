@@ -17,6 +17,6 @@
 	},
 	"files": {
 		"ignore": [".next/**/*", "node_modules/**/*"],
-		"include": ["app/**/*"]
+		"include": ["app/**/*", "components/**/*", "lib/**/*", "tests-e2e/**/*"]
 	}
 }

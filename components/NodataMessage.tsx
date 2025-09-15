@@ -1,2 +1,2 @@
-const NodataMessage = () => <div>データがありません</div>
+const NodataMessage = () => <div>データがありません</div>;
 export default NodataMessage;

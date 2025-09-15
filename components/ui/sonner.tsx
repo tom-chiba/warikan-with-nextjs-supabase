@@ -1,20 +1,20 @@
-"use client"
+"use client";
 
-import { useTheme } from "next-themes"
-import { Toaster as Sonner } from "sonner"
+import { useTheme } from "next-themes";
+import { Toaster as Sonner } from "sonner";
 
-type ToasterProps = React.ComponentProps<typeof Sonner>
+type ToasterProps = React.ComponentProps<typeof Sonner>;
 
-type SonnerTheme = NonNullable<ToasterProps["theme"]>
+type SonnerTheme = NonNullable<ToasterProps["theme"]>;
 
 const isSonnerTheme = (theme: string): theme is SonnerTheme => {
-	return ["light", "dark", "system"].includes(theme)
-}
+	return ["light", "dark", "system"].includes(theme);
+};
 
 const Toaster = ({ ...props }: ToasterProps) => {
-	const { theme = "system" } = useTheme()
+	const { theme = "system" } = useTheme();
 
-	const sonnerTheme: SonnerTheme = isSonnerTheme(theme) ? theme : "system"
+	const sonnerTheme: SonnerTheme = isSonnerTheme(theme) ? theme : "system";
 
 	return (
 		<Sonner
@@ -34,7 +34,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
 			closeButton
 			{...props}
 		/>
-	)
-}
+	);
+};
 
-export { Toaster }
+export { Toaster };
