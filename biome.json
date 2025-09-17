@@ -16,7 +16,11 @@
 		}
 	},
 	"files": {
-		"ignore": [".next/**/*", "node_modules/**/*"],
-		"include": ["app/**/*", "components/**/*", "lib/**/*", "tests-e2e/**/*"]
+		"ignore": [
+			".next/**/*",
+			"node_modules/**/*",
+			"tests/playwright/.auth/**/*"
+		],
+		"include": ["app/**/*", "components/**/*", "lib/**/*", "tests/**/*"]
 	}
 }

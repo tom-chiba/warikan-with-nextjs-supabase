@@ -9,7 +9,7 @@ dotenv.config({ path: path.resolve(__dirname, ".env.local") });
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-	testDir: "./tests-e2e",
+	testDir: "./tests/playwright",
 	/* Run tests in files in parallel */
 	fullyParallel: true,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -40,7 +40,7 @@ export default defineConfig({
 			use: {
 				...devices["Desktop Chrome"],
 				// Use prepared auth state.
-				storageState: "tests-e2e/.auth/user.json",
+				storageState: "tests/playwright/.auth/user.json",
 			},
 			dependencies: ["setup"],
 			// storageState を利用するテストを指定

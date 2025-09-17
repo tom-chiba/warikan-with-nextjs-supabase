@@ -1,6 +1,6 @@
 import { expect, test as setup } from "@playwright/test";
 
-const authFile = "tests-e2e/.auth/user.json";
+const authFile = "tests/playwright/.auth/user.json";
 
 setup("authenticate", async ({ page }) => {
 	// ログインページに移動
