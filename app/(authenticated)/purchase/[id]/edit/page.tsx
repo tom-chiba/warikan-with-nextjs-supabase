@@ -3,16 +3,17 @@ import { notFound } from "next/navigation";
 import PurchaseEditForm from "./PurchaseEditForm";
 
 type PurchaseEditPageProps = {
-	params: {
+	params: Promise<{
 		id: string;
-	};
+	}>;
 };
 
 const PurchaseEditPage = async ({ params }: PurchaseEditPageProps) => {
-	const supabase = createClient();
-	const purchaseId = Number(params.id);
+	const supabase = await createClient();
+	const { id: purchaseId } = await params;
+	const purchaseIdAsNumber = Number(purchaseId);
 
-	if (Number.isNaN(purchaseId)) {
+	if (Number.isNaN(purchaseIdAsNumber)) {
 		notFound();
 	}
 
@@ -26,7 +27,7 @@ const PurchaseEditPage = async ({ params }: PurchaseEditPageProps) => {
       purchasers_purchases ( id, purchaser_id, amount_paid, amount_to_pay )
     `,
 		)
-		.eq("id", purchaseId)
+		.eq("id", purchaseIdAsNumber)
 		.single();
 
 	if (purchaseError || !purchaseData) {
@@ -62,7 +63,7 @@ const PurchaseEditPage = async ({ params }: PurchaseEditPageProps) => {
 		<div className="p-4">
 			<h1 className="text-2xl font-bold mb-4">購入品編集ページ</h1>
 			<PurchaseEditForm
-				purchaseId={purchaseId}
+				purchaseId={purchaseIdAsNumber}
 				initialPurchasers={purchasers}
 				initialPurchase={initialPurchase}
 			/>

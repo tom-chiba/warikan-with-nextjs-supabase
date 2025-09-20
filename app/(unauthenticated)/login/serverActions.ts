@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 export const signIn = async (formData: FormData) => {
 	const email = formData.get("email") as string;
 	const password = formData.get("password") as string;
-	const supabase = createClient();
+	const supabase = await createClient();
 
 	const { error } = await supabase.auth.signInWithPassword({
 		email,
@@ -22,10 +22,10 @@ export const signIn = async (formData: FormData) => {
 };
 
 export const signUp = async (formData: FormData) => {
-	const origin = headers().get("origin");
+	const origin = (await headers()).get("origin");
 	const email = formData.get("email") as string;
 	const password = formData.get("password") as string;
-	const supabase = createClient();
+	const supabase = await createClient();
 
 	const { error } = await supabase.auth.signUp({
 		email,

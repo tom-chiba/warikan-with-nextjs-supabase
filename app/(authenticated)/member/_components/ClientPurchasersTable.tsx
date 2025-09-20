@@ -143,6 +143,7 @@ const ClientPurchasersTable = ({
 									size="icon"
 									onClick={() => endEditingPurchaserName("update")}
 									disabled={!inputPurchaser.name}
+									aria-label="Save"
 								>
 									<Check className="h-4 w-4" />
 								</Button>
@@ -157,6 +158,7 @@ const ClientPurchasersTable = ({
 										})
 									}
 									disabled={inputPurchaser !== undefined}
+									aria-label="Edit"
 								>
 									<Edit className="h-4 w-4" />
 								</Button>
@@ -169,6 +171,7 @@ const ClientPurchasersTable = ({
 									variant="outline"
 									size="icon"
 									onClick={() => setInputPurchaser(undefined)}
+									aria-label="Cancel"
 								>
 									<X className="h-4 w-4" />
 								</Button>
@@ -177,6 +180,7 @@ const ClientPurchasersTable = ({
 									size="icon"
 									onClick={() => deletePurchaserMutation.mutate(purchaser.id)}
 									disabled={inputPurchaser !== undefined}
+									aria-label="Delete"
 								>
 									<Trash className="h-4 w-4" />
 								</Button>
@@ -208,6 +212,7 @@ const ClientPurchasersTable = ({
 									size="icon"
 									onClick={() => endEditingPurchaserName("create")}
 									disabled={!inputPurchaser.name}
+									aria-label="Save"
 								>
 									<Check className="h-4 w-4" />
 								</Button>
@@ -217,6 +222,7 @@ const ClientPurchasersTable = ({
 									variant="outline"
 									size="icon"
 									onClick={() => setInputPurchaser(undefined)}
+									aria-label="Cancel"
 								>
 									<X className="h-4 w-4" />
 								</Button>

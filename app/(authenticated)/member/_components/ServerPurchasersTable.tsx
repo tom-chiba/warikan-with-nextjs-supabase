@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import ClientPurchasersTable from "./ClientPurchasersTable";
 
 const ServerPurchasersTable = async () => {
-	const supabase = createClient();
+	const supabase = await createClient();
 
 	const { data: purchasers, error } = await supabase
 		.from("purchasers")
