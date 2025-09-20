@@ -9,7 +9,7 @@
     "biome:format": "biome check --write .",
     "check": "run-s tsc biome:check",
     "gemini": "gemini",
-    "test:comp": "vitest --dir tests/vitest/component",
+    "test:comp": "vitest run --dir tests/vitest/component",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

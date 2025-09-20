@@ -11,5 +11,8 @@
 		"source.organizeImports.biome": "explicit"
 	},
 	"editor.formatOnSave": true,
-	"typescript.tsdk": "node_modules\\typescript\\lib"
+	"typescript.tsdk": "node_modules\\typescript\\lib",
+	"chat.tools.terminal.autoApprove": {
+		"npm run test:comp": true
+	}
 }

@@ -3,6 +3,8 @@ import { http, HttpResponse, type PathParams } from "msw";
 
 type Purchaser = Database["public"]["Tables"]["purchasers"]["Row"];
 type PurchaserInsert = Database["public"]["Tables"]["purchasers"]["Insert"];
+type Purchase = Database["public"]["Tables"]["purchases"]["Row"];
+type PurchaseInsert = Database["public"]["Tables"]["purchases"]["Insert"];
 
 export const handlers = [
 	http.get<PathParams, never, Purchaser[]>("*/rest/v1/purchasers*", () => {
@@ -48,4 +50,22 @@ export const handlers = [
 	http.delete("*/rest/v1/purchasers*", () => {
 		return new HttpResponse(null, { status: 204 });
 	}),
+	http.post("*/rest/v1/purchasers_purchases", async () => {
+		return new HttpResponse(null, { status: 201 });
+	}),
+	http.post<PathParams, PurchaseInsert, Purchase>(
+		"*/rest/v1/purchases",
+		async ({ request }) => {
+			const newPurchase = await request.json();
+			return HttpResponse.json({
+				...newPurchase,
+				id: 999,
+				created_at: new Date().toISOString(),
+				user_id: "test-user-id",
+				is_settled: false,
+				note: newPurchase.note ?? "",
+				purchase_date: newPurchase.purchase_date ?? null,
+			});
+		},
+	),
 ];
