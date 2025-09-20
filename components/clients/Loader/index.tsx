@@ -22,6 +22,7 @@ const Loader = ({ isLoading }: Props) => {
 
 	return (
 		<div
+			aria-label="読み込み中"
 			className={
 				"fixed top-0 left-0 flex justify-center items-center w-full h-full bg-white bg-opacity-50"
 			}
