@@ -2,14 +2,7 @@
 
 import ErrorMessage from "@/components/ErrorMessage";
 import NodataMessage from "@/components/NodataMessage";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
+import { GenericTable } from "@/components/ui/GenericTable";
 import { createClient } from "@/utils/supabase/client";
 import type { UseQueryDataAndStatus } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -139,28 +132,33 @@ const ClientSettledTable = ({
 			) : purchaseTableData.data.length === 0 ? (
 				<NodataMessage />
 			) : (
-				<Table>
-					<TableHeader>
-						<TableRow>
-							<TableHead>購入品名</TableHead>
-							<TableHead>購入日</TableHead>
-							<TableHead>合計金額(円)</TableHead>
-							<TableHead className="w-[20px]" />
-						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{purchaseTableData.data.map((purchase) => (
-							<TableRow key={purchase.id}>
-								<TableCell>{purchase.title}</TableCell>
-								<TableCell>{purchase.date}</TableCell>
-								<TableCell>{purchase.totalAmount}</TableCell>
-								<TableCell>
-									<ClientControlMenu purchaseId={purchase.id} />
-								</TableCell>
-							</TableRow>
-						))}
-					</TableBody>
-				</Table>
+				<GenericTable
+					columns={[
+						{
+							key: "title",
+							header: "購入品名",
+							cell: (purchase) => purchase.title,
+						},
+						{
+							key: "date",
+							header: "購入日",
+							cell: (purchase) => purchase.date,
+						},
+						{
+							key: "totalAmount",
+							header: "合計金額(円)",
+							cell: (purchase) => purchase.totalAmount,
+						},
+						{
+							key: "menu",
+							header: "",
+							cell: (purchase) => (
+								<ClientControlMenu purchaseId={purchase.id} />
+							),
+						},
+					]}
+					data={purchaseTableData.data}
+				/>
 			)}
 		</>
 	);

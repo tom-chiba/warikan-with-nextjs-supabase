@@ -3,15 +3,8 @@
 import ErrorMessage from "@/components/ErrorMessage";
 import NodataMessage from "@/components/NodataMessage";
 import Loader from "@/components/clients/Loader";
+import { GenericTable } from "@/components/ui/GenericTable";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
 import { createClient } from "@/utils/supabase/client";
 import type { UseQueryDataAndStatus } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -154,10 +147,11 @@ const ClientUnsettledTable = ({
 				<NodataMessage />
 			) : (
 				<>
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead className="w-[20px]">
+					<GenericTable
+						columns={[
+							{
+								key: "select",
+								header: (
 									<Checkbox
 										checked={getAllPurchasesAreChecked(purchasesCache.data)}
 										onCheckedChange={() =>
@@ -168,44 +162,50 @@ const ClientUnsettledTable = ({
 											)
 										}
 									/>
-								</TableHead>
-								<TableHead>購入品名</TableHead>
-								<TableHead>購入日</TableHead>
-								<TableHead>合計金額(円)</TableHead>
-								<TableHead className="w-[20px]" />
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{purchaseTableData.data.map((purchase) => (
-								<TableRow key={purchase.id}>
-									<TableCell>
-										<Checkbox
-											checked={selectedPurchaseIds.includes(purchase.id)}
-											onCheckedChange={() => {
-												if (selectedPurchaseIds.includes(purchase.id))
-													onSelectPurchases(
-														selectedPurchaseIds.filter(
-															(x) => x !== purchase.id,
-														),
-													);
-												else
-													onSelectPurchases([
-														...selectedPurchaseIds,
-														purchase.id,
-													]);
-											}}
-										/>
-									</TableCell>
-									<TableCell>{purchase.title}</TableCell>
-									<TableCell>{purchase.date}</TableCell>
-									<TableCell>{purchase.totalAmount}</TableCell>
-									<TableCell>
-										<ClientControlMenu purchaseId={purchase.id} />
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
+								),
+								cell: (purchase) => (
+									<Checkbox
+										checked={selectedPurchaseIds.includes(purchase.id)}
+										onCheckedChange={() => {
+											if (selectedPurchaseIds.includes(purchase.id)) {
+												onSelectPurchases(
+													selectedPurchaseIds.filter((x) => x !== purchase.id),
+												);
+											} else {
+												onSelectPurchases([
+													...selectedPurchaseIds,
+													purchase.id,
+												]);
+											}
+										}}
+									/>
+								),
+							},
+							{
+								key: "title",
+								header: "購入品名",
+								cell: (purchase) => purchase.title,
+							},
+							{
+								key: "date",
+								header: "購入日",
+								cell: (purchase) => purchase.date,
+							},
+							{
+								key: "totalAmount",
+								header: "合計金額(円)",
+								cell: (purchase) => purchase.totalAmount,
+							},
+							{
+								key: "menu",
+								header: "",
+								cell: (purchase) => (
+									<ClientControlMenu purchaseId={purchase.id} />
+								),
+							},
+						]}
+						data={purchaseTableData.data}
+					/>
 				</>
 			)}
 		</>
