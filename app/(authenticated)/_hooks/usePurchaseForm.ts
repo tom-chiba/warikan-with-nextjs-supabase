@@ -4,76 +4,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 import type { ClientFormProps } from "../_components/ClientForm";
-
-const purchaseSchema = z
-	.object({
-		title: z.string().min(1, { message: "必須" }),
-		date: z.date().optional(),
-		note: z.string().optional(),
-		purchasersAmountPaid: z.array(
-			z.object({
-				amountPaid: z.union([
-					z
-						.number({ message: "数字を入力してください" })
-						.nonnegative({ message: "正の値を入力してください" })
-						.int({ message: "整数を入力してください" }),
-					z.string().length(0, { message: "数字を入力してください" }),
-				]),
-			}),
-		),
-		purchasersAmountToPay: z.array(
-			z.object({
-				amountToPay: z.union([
-					z
-						.number({ message: "数字じゃないとダメ" })
-						.nonnegative({ message: "0以上の値じゃないとダメ" })
-						.int({ message: "整数じゃないとダメ" }),
-					z.string().length(0, { message: "数字じゃないとダメ" }),
-				]),
-			}),
-		),
-	})
-	.superRefine(({ purchasersAmountPaid, purchasersAmountToPay }, ctx) => {
-		const purchasersAmountPaidSum = purchasersAmountPaid.reduce(
-			(accumulator, currentValue) => {
-				if (typeof currentValue.amountPaid === "string") return accumulator;
-				return accumulator + currentValue.amountPaid;
-			},
-			0,
-		);
-		const purchasersAmountToPaySum = purchasersAmountToPay.reduce(
-			(accumulator, currentValue) => {
-				if (typeof currentValue.amountToPay === "string") return accumulator;
-				return accumulator + currentValue.amountToPay;
-			},
-			0,
-		);
-		purchasersAmountPaid.forEach((_, i) => {
-			if (purchasersAmountPaidSum !== purchasersAmountToPaySum)
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					message: "支払額と割勘金額の合計が一致していません",
-					path: ["purchasersAmountPaid", i, "amountPaid"],
-				});
-		});
-		purchasersAmountToPay.forEach((_, i) => {
-			if (purchasersAmountPaidSum !== purchasersAmountToPaySum)
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					message: "支払額と割勘金額の合計が一致していません",
-					path: ["purchasersAmountToPay", i, "amountToPay"],
-				});
-		});
-	});
+import {
+	type PurchaseFormValues,
+	getPurchaseFormDefaultValues,
+	purchaseSchema,
+} from "./purchaseFormSchema";
 
 const usePurchaseForm = (
 	initialPurchasers: ClientFormProps["initialPurchasers"],
 	purchaseIdForUpdate?: number,
-	formDefaultValues?: Required<
-		Parameters<typeof useForm<z.infer<typeof purchaseSchema>>>
-	>[0]["defaultValues"],
+	formDefaultValues?: PurchaseFormValues,
 	onSuccessUpdatePurchase?: () => void,
 ) => {
 	const supabase = createClient();
@@ -99,7 +40,7 @@ const usePurchaseForm = (
 			note,
 			purchasersAmountPaid,
 			purchasersAmountToPay,
-		}: z.infer<typeof purchaseSchema>) => {
+		}: PurchaseFormValues) => {
 			const { data: purchaseData, error: purchaseError } = await supabase
 				.from("purchases")
 				.insert([
@@ -117,15 +58,18 @@ const usePurchaseForm = (
 			const { error: purchasersPurchasesError } = await supabase
 				.from("purchasers_purchases")
 				.insert(
-					purchasersAmountPaid.map((x, i) => ({
-						purchase_id: insertedPurchaseData.id,
-						purchaser_id: purchasersCache.data[i].id,
-						amount_paid: typeof x.amountPaid === "number" ? x.amountPaid : null,
-						amount_to_pay:
-							typeof purchasersAmountToPay[i].amountToPay === "number"
-								? purchasersAmountToPay[i].amountToPay
-								: null,
-					})),
+					purchasersAmountPaid.map(
+						(x: { amountPaid: number | string }, i: number) => ({
+							purchase_id: insertedPurchaseData.id,
+							purchaser_id: purchasersCache.data[i].id,
+							amount_paid:
+								typeof x.amountPaid === "number" ? x.amountPaid : null,
+							amount_to_pay:
+								typeof purchasersAmountToPay[i].amountToPay === "number"
+									? purchasersAmountToPay[i].amountToPay
+									: null,
+						}),
+					),
 				)
 				.select();
 
@@ -148,7 +92,7 @@ const usePurchaseForm = (
 			note,
 			purchasersAmountPaid,
 			purchasersAmountToPay,
-		}: z.infer<typeof purchaseSchema>) => {
+		}: PurchaseFormValues) => {
 			if (!purchaseIdForUpdate) return;
 
 			const { data: purchaseData, error: purchaseError } = await supabase
@@ -208,17 +152,11 @@ const usePurchaseForm = (
 					isRefetching: purchasersCache.isRefetching,
 				};
 
-	const form = useForm<z.infer<typeof purchaseSchema>>({
+	const form = useForm<PurchaseFormValues>({
 		resolver: zodResolver(purchaseSchema),
-		defaultValues: formDefaultValues ?? {
-			title: "",
-			date: new Date(),
-			note: "",
-			purchasersAmountPaid:
-				purchaserNames.data?.map(() => ({ amountPaid: 0 })) ?? [],
-			purchasersAmountToPay:
-				purchaserNames.data?.map(() => ({ amountToPay: 0 })) ?? [],
-		},
+		defaultValues:
+			formDefaultValues ??
+			getPurchaseFormDefaultValues(purchaserNames.data ?? []),
 	});
 
 	const { fields: purchasersAmountPaidFields } = useFieldArray({
@@ -233,10 +171,10 @@ const usePurchaseForm = (
 		name: "purchasersAmountToPay",
 	});
 
-	const handleSubmitCreate = (values: z.infer<typeof purchaseSchema>) => {
+	const handleSubmitCreate = (values: PurchaseFormValues) => {
 		createPurchaseMutation.mutate(values);
 	};
-	const handleSubmitUpdate = (values: z.infer<typeof purchaseSchema>) => {
+	const handleSubmitUpdate = (values: PurchaseFormValues) => {
 		updatePurchaseMutation.mutate(values);
 	};
 
