@@ -84,24 +84,44 @@ const ClientPurchasersTable = ({
 		},
 	});
 
+	// 重複名チェックとエラーハンドリングをまとめた共通関数
+	const validatePurchaserName = (
+		name: string,
+		mode: "create" | "update",
+		id?: number,
+	) => {
+		const isDuplicate = purchasersCache.data.some(
+			(p) =>
+				p.name === name &&
+				(mode === "create" || (mode === "update" && p.id !== id)),
+		);
+		if (isDuplicate) {
+			setErrorMessage("同じ名前のメンバーが既に存在します");
+			return false;
+		}
+		setErrorMessage(undefined);
+		return true;
+	};
+
 	const endEditingPurchaserName = (mode: "create" | "update") => {
 		if (!inputPurchaser) return;
 		if (!inputPurchaser.name) return;
-		setErrorMessage(undefined);
 		switch (mode) {
 			case "create": {
-				const exists = purchasersCache.data.some(
-					(p) => p.name === inputPurchaser.name,
-				);
-				if (exists) {
-					setErrorMessage("同じ名前のメンバーが既に存在します");
-					return;
-				}
+				if (!validatePurchaserName(inputPurchaser.name, "create")) return;
 				createPurchaserMutation.mutate(inputPurchaser.name);
 				break;
 			}
 			case "update": {
 				if (!inputPurchaser.id) return;
+				if (
+					!validatePurchaserName(
+						inputPurchaser.name,
+						"update",
+						inputPurchaser.id,
+					)
+				)
+					return;
 				updatePurchaserMutation.mutate({
 					id: inputPurchaser.id,
 					newName: inputPurchaser.name,
@@ -126,21 +146,28 @@ const ClientPurchasersTable = ({
 					<TableRow key={purchaser.name}>
 						<TableCell className="font-medium">
 							{inputPurchaser?.id === purchaser.id ? (
-								<Input
-									value={inputPurchaser.name}
-									onChange={(e) =>
-										setInputPurchaser((prev) => {
-											if (!prev) return prev;
-											return {
-												...prev,
-												name: e.target.value,
-											};
-										})
-									}
-									onKeyDown={(e) => {
-										if (e.key === "Enter") endEditingPurchaserName("update");
-									}}
-								/>
+								<div>
+									<Input
+										value={inputPurchaser.name}
+										onChange={(e) =>
+											setInputPurchaser((prev) => {
+												if (!prev) return prev;
+												return {
+													...prev,
+													name: e.target.value,
+												};
+											})
+										}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") endEditingPurchaserName("update");
+										}}
+									/>
+									{errorMessage !== undefined && (
+										<span className="text-red-500 text-xs mt-0.5">
+											{errorMessage}
+										</span>
+									)}
+								</div>
 							) : (
 								<>{purchaser.name}</>
 							)}
