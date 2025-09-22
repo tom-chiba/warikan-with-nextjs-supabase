@@ -2,7 +2,7 @@ import NodataMessage from "@/components/NodataMessage";
 import { createClient } from "@/utils/supabase/server";
 import ClientUnsettledBlock from "./ClientUnsettledBlock";
 
-export const ServerUnsettledBlock = async () => {
+const ServerUnsettledBlock = async () => {
 	const supabase = await createClient();
 
 	const { data: purchasesData, error: purchasesError } = await supabase
@@ -26,3 +26,4 @@ export const ServerUnsettledBlock = async () => {
 
 	return <ClientUnsettledBlock initialPurchases={purchasesData} />;
 };
+export default ServerUnsettledBlock;
