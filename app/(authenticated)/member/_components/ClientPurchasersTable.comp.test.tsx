@@ -15,6 +15,18 @@ const initialPurchasers = [
 ];
 
 describe("ClientPurchasersTable", () => {
+	it("同名のメンバーは追加できず、エラーメッセージが表示される", async () => {
+		render(<ClientPurchasersTable initialPurchasers={initialPurchasers} />, {
+			wrapper: TSQWrapper,
+		});
+		await user.click(screen.getByText("追加"));
+		await user.type(screen.getByRole("textbox"), "Alice");
+		await user.click(screen.getByRole("button", { name: /Save/i }));
+		// 既に存在する名前なのでエラーが表示されることを期待
+		expect(
+			await screen.findByText("同じ名前のメンバーが既に存在します"),
+		).toBeInTheDocument();
+	});
 	it("初期購入者が表示されるべき", () => {
 		render(<ClientPurchasersTable initialPurchasers={initialPurchasers} />, {
 			wrapper: TSQWrapper,

@@ -25,6 +25,7 @@ type ClientPurchasersTableProps = {
 const ClientPurchasersTable = ({
 	initialPurchasers,
 }: ClientPurchasersTableProps) => {
+	const [errorMessage, setErrorMessage] = useState<string | undefined>();
 	const supabase = createClient();
 	const queryClient = useQueryClient();
 
@@ -86,8 +87,16 @@ const ClientPurchasersTable = ({
 	const endEditingPurchaserName = (mode: "create" | "update") => {
 		if (!inputPurchaser) return;
 		if (!inputPurchaser.name) return;
+		setErrorMessage(undefined);
 		switch (mode) {
 			case "create": {
+				const exists = purchasersCache.data.some(
+					(p) => p.name === inputPurchaser.name,
+				);
+				if (exists) {
+					setErrorMessage("同じ名前のメンバーが既に存在します");
+					return;
+				}
 				createPurchaserMutation.mutate(inputPurchaser.name);
 				break;
 			}
@@ -194,18 +203,25 @@ const ClientPurchasersTable = ({
 					{inputPurchaser && inputPurchaser.id === undefined ? (
 						<>
 							<TableCell>
-								<Input
-									value={inputPurchaser?.name}
-									onChange={(e) =>
-										setInputPurchaser((prev) => {
-											if (!prev) return prev;
-											return { ...prev, name: e.target.value };
-										})
-									}
-									onKeyDown={(e) => {
-										if (e.key === "Enter") endEditingPurchaserName("create");
-									}}
-								/>
+								<div>
+									<Input
+										value={inputPurchaser?.name}
+										onChange={(e) =>
+											setInputPurchaser((prev) => {
+												if (!prev) return prev;
+												return { ...prev, name: e.target.value };
+											})
+										}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") endEditingPurchaserName("create");
+										}}
+									/>
+									{errorMessage !== undefined && (
+										<span className="text-red-500 text-xs mt-0.5">
+											{errorMessage}
+										</span>
+									)}
+								</div>
 							</TableCell>
 							<TableCell>
 								<Button
