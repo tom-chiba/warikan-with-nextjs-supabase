@@ -1,7 +1,12 @@
 import ClientUnsettledBlock from "@/app/(authenticated)/unsettled/_components/ClientUnsettledBlock";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { TSQWrapper, user } from "../setup";
+import type { Database } from "@/database.types";
+import { server } from "@/tests/mocks/node";
+import { TSQWrapper, user } from "@/tests/vitest/setup";
+import { render, screen, waitFor } from "@testing-library/react";
+import { http, HttpResponse, type PathParams } from "msw";
+import { describe, expect, it, vi } from "vitest";
+
+type PurchasesRow = Database["public"]["Tables"]["purchases"]["Row"];
 
 const initialPurchases = [
 	{
@@ -54,5 +59,39 @@ describe("ClientUnsettledBlock", () => {
 		expect(
 			screen.getByRole("button", { name: "まとめて精算" }),
 		).not.toBeDisabled();
+	});
+
+	it("まとめて精算ボタンで複数IDのPATCH APIが正しいボディで呼ばれる", async () => {
+		const patchSpy = vi.fn();
+		let calledUrl = "";
+		server.use(
+			http.patch<PathParams, { is_settled: boolean }, PurchasesRow[]>(
+				"*/rest/v1/purchases*",
+				async ({ request }) => {
+					const body = await request.json();
+					patchSpy(body);
+					calledUrl = request.url;
+					return HttpResponse.json([]);
+				},
+			),
+		);
+		render(<ClientUnsettledBlock initialPurchases={initialPurchases} />, {
+			wrapper: TSQWrapper,
+		});
+		// 2つの購入品を選択
+		const checkboxes = screen.getAllByRole("checkbox");
+		await user.click(checkboxes[1]);
+		await user.click(checkboxes[2]);
+		const button = screen.getByRole("button", { name: "まとめて精算" });
+		await user.click(button);
+		await waitFor(() => {
+			expect(patchSpy).toHaveBeenCalledWith({ is_settled: true });
+			const params = new URL(calledUrl).searchParams;
+			// id=in.() 形式で2つのidが含まれていることを検証
+			const idParam = params.get("id");
+			expect(idParam).toMatch(/in\.(\([^)]+\))/);
+			const ids = idParam?.match(/in\.\(([^)]+)\)/)?.[1].split(",");
+			expect(ids).toEqual(["1", "2"]);
+		});
 	});
 });

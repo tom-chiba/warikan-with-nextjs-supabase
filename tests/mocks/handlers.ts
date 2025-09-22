@@ -2,9 +2,10 @@ import type { Database } from "@/database.types";
 import { http, HttpResponse, type PathParams } from "msw";
 
 type Purchaser = Database["public"]["Tables"]["purchasers"]["Row"];
-type PurchaserInsert = Database["public"]["Tables"]["purchasers"]["Insert"];
-type Purchase = Database["public"]["Tables"]["purchases"]["Row"];
-type PurchaseInsert = Database["public"]["Tables"]["purchases"]["Insert"];
+type PurchaseWithPurchasersPurchases =
+	Database["public"]["Tables"]["purchases"]["Row"] & {
+		purchasers_purchases: Database["public"]["Tables"]["purchasers_purchases"]["Row"][];
+	};
 
 export const handlers = [
 	http.get<PathParams, never, Purchaser[]>("*/rest/v1/purchasers*", () => {
@@ -23,49 +24,69 @@ export const handlers = [
 			},
 		]);
 	}),
-	http.post<PathParams, PurchaserInsert, Purchaser>(
-		"*/rest/v1/purchasers*",
-		async ({ request }) => {
-			const newPurchaser = await request.json();
-			return HttpResponse.json({
-				...newPurchaser,
-				id: 3,
-				created_at: new Date().toISOString(),
-				user_id: "",
-			});
-		},
-	),
-	http.patch<PathParams, PurchaserInsert, Purchaser>(
-		"*/rest/v1/purchasers*",
-		async ({ request }) => {
-			const updatedPurchaser = await request.json();
-			return HttpResponse.json({
-				...updatedPurchaser,
-				id: 1,
-				created_at: new Date().toISOString(),
-				user_id: "",
-			});
-		},
-	),
-	http.delete("*/rest/v1/purchasers*", () => {
-		return new HttpResponse(null, { status: 204 });
-	}),
-	http.post("*/rest/v1/purchasers_purchases", async () => {
-		return new HttpResponse(null, { status: 201 });
-	}),
-	http.post<PathParams, PurchaseInsert, Purchase>(
-		"*/rest/v1/purchases",
-		async ({ request }) => {
-			const newPurchase = await request.json();
-			return HttpResponse.json({
-				...newPurchase,
-				id: 999,
-				created_at: new Date().toISOString(),
-				user_id: "test-user-id",
-				is_settled: false,
-				note: newPurchase.note ?? "",
-				purchase_date: newPurchase.purchase_date ?? null,
-			});
+	http.get<PathParams, never, PurchaseWithPurchasersPurchases[]>(
+		"*/rest/v1/purchases*",
+		() => {
+			return HttpResponse.json([
+				{
+					id: 1,
+					title: "未精算購入1",
+					purchase_date: "2025-09-20",
+					note: "メモA",
+					is_settled: false,
+					created_at: new Date().toISOString(),
+					user_id: "",
+					purchasers_purchases: [
+						{
+							id: 1,
+							purchase_id: 1,
+							purchaser_id: 1,
+							amount_paid: 1000,
+							amount_to_pay: 500,
+							created_at: new Date().toISOString(),
+							user_id: "",
+						},
+						{
+							id: 2,
+							purchase_id: 1,
+							purchaser_id: 2,
+							amount_paid: 0,
+							amount_to_pay: 500,
+							created_at: new Date().toISOString(),
+							user_id: "",
+						},
+					],
+				},
+				{
+					id: 2,
+					title: "未精算購入2",
+					purchase_date: "2025-09-19",
+					note: "メモB",
+					is_settled: false,
+					created_at: new Date().toISOString(),
+					user_id: "",
+					purchasers_purchases: [
+						{
+							id: 3,
+							purchase_id: 2,
+							purchaser_id: 1,
+							amount_paid: 500,
+							amount_to_pay: 250,
+							created_at: new Date().toISOString(),
+							user_id: "",
+						},
+						{
+							id: 4,
+							purchase_id: 2,
+							purchaser_id: 2,
+							amount_paid: 0,
+							amount_to_pay: 250,
+							created_at: new Date().toISOString(),
+							user_id: "",
+						},
+					],
+				},
+			]);
 		},
 	),
 ];

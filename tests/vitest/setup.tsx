@@ -16,6 +16,10 @@ const ResizeObserverMock = vi.fn(() => ({
 }));
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: vi.fn() }),
+}));
+
 export const user = userEvent.setup();
 
 export const TSQWrapper = ({ children }: { children: ReactNode }) => {

@@ -10,6 +10,7 @@ dotenv.config({ path: path.resolve(__dirname, ".env.local") });
  */
 export default defineConfig({
 	testDir: "./tests/playwright",
+	testMatch: "./tests/playwright/*.e2e.test.ts",
 	/* Run tests in files in parallel */
 	fullyParallel: true,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -33,7 +34,7 @@ export default defineConfig({
 	/* Configure projects for major browsers */
 	projects: [
 		// Setup project
-		{ name: "setup", testMatch: /.*\.setup\.ts/ },
+		{ name: "setup", testMatch: "tests/playwright/*.setup.e2e.test.ts" },
 
 		{
 			name: "chromium",
@@ -45,7 +46,7 @@ export default defineConfig({
 			dependencies: ["setup"],
 			// storageState を利用するテストを指定
 			testMatch: [
-				"**/happypath.spec.ts",
+				"tests/playwright/happypath.e2e.test.ts",
 			],
 		},
 	],

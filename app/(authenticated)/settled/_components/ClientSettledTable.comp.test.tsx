@@ -1,7 +1,7 @@
 import ClientSettledTable from "@/app/(authenticated)/settled/_components/ClientSettledTable";
+import { TSQWrapper } from "@/tests/vitest/setup";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { TSQWrapper } from "../setup";
 
 const initialPurchasers = [
 	{ id: 1, name: "John" },
