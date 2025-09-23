@@ -9,6 +9,7 @@
     "biome:format": "biome check --write .",
     "check": "run-s tsc biome:check",
     "gemini": "gemini",
+    "gemini:flash": "gemini -m \"gemini-2.5-flash\"",
     "test:comp": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
