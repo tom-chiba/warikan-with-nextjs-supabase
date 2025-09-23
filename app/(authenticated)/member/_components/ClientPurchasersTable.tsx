@@ -148,6 +148,7 @@ const ClientPurchasersTable = ({
 							{inputPurchaser?.id === purchaser.id ? (
 								<div>
 									<Input
+										autoFocus
 										value={inputPurchaser.name}
 										onChange={(e) =>
 											setInputPurchaser((prev) => {
@@ -232,6 +233,7 @@ const ClientPurchasersTable = ({
 							<TableCell>
 								<div>
 									<Input
+										autoFocus
 										value={inputPurchaser?.name}
 										onChange={(e) =>
 											setInputPurchaser((prev) => {

@@ -171,4 +171,13 @@ describe("ClientPurchasersTable", () => {
 			expect(postRequestSpy).toHaveBeenCalledWith({ name: "Charlie" });
 		});
 	});
+
+	it("追加ボタン押下で新規入力欄が表示され、即座にフォーカスされる", async () => {
+		render(<ClientPurchasersTable initialPurchasers={initialPurchasers} />, {
+			wrapper: TSQWrapper,
+		});
+		await user.click(screen.getByText("追加"));
+		const textbox = await screen.findByRole("textbox");
+		expect(textbox).toHaveFocus();
+	});
 });
