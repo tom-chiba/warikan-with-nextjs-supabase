@@ -1,4 +1,5 @@
 import type { Database } from "@/database.types";
+import { format, subDays } from "date-fns";
 import { http, HttpResponse, type PathParams } from "msw";
 
 type Purchaser = Database["public"]["Tables"]["purchasers"]["Row"];
@@ -31,7 +32,7 @@ export const handlers = [
 				{
 					id: 1,
 					title: "未精算購入1",
-					purchase_date: "2025-09-20",
+					purchase_date: format(new Date(), "yyyy-MM-dd"),
 					note: "メモA",
 					is_settled: false,
 					created_at: new Date().toISOString(),
@@ -60,7 +61,7 @@ export const handlers = [
 				{
 					id: 2,
 					title: "未精算購入2",
-					purchase_date: "2025-09-19",
+					purchase_date: format(subDays(new Date(), 1), "yyyy-MM-dd"),
 					note: "メモB",
 					is_settled: false,
 					created_at: new Date().toISOString(),

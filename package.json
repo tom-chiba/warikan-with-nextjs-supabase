@@ -11,6 +11,7 @@
     "gemini": "gemini",
     "gemini:flash": "gemini -m \"gemini-2.5-flash\"",
     "test:comp": "vitest run",
+    "test:comp:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
@@ -56,7 +57,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
-    "@google/gemini-cli": "^0.5.5",
+    "@google/gemini-cli": "^0.6.1",
     "@playwright/test": "^1.54.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.8.0",
@@ -72,6 +73,7 @@
     "lefthook": "^1.12.3",
     "msw": "^2.11.2",
     "npm-run-all": "^4.1.5",
+    "shadcn": "^3.3.1",
     "supabase": "^1.142.2",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4"

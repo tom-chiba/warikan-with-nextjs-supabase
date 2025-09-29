@@ -7,8 +7,8 @@ import { describe, expect, it, vi } from "vitest";
 import PurchaseEditForm from "./PurchaseEditForm";
 
 const initialPurchasers = [
-	{ id: 1, name: "Alice" },
-	{ id: 2, name: "Bob" },
+	{ id: 1, name: "John" },
+	{ id: 2, name: "Jane" },
 ];
 const initialPurchase = {
 	title: "ランチ",
@@ -169,22 +169,24 @@ describe("PurchaseEditForm", () => {
 			/>,
 			{ wrapper: TSQWrapper },
 		);
-		// Alice/Bob両方のinput（支払金額・支払うべき金額）を編集し、合計が一致するようにする
+		// John/Bob両方のinput（支払金額・支払うべき金額）を編集し、合計が一致するようにする
 		await waitFor(() =>
-			expect(screen.getAllByLabelText("Alice").length).toBe(2),
+			expect(screen.getAllByLabelText("John").length).toBe(2),
 		);
-		await waitFor(() => expect(screen.getAllByLabelText("Bob").length).toBe(2));
-		const [alicePaidInput, aliceToPayInput] = screen.getAllByLabelText("Alice");
-		const [bobPaidInput, bobToPayInput] = screen.getAllByLabelText("Bob");
-		// 例: Alice/Bobとも支払金額2000、支払うべき金額2000
-		await user.clear(alicePaidInput);
-		await user.type(alicePaidInput, "2000");
-		await user.clear(aliceToPayInput);
-		await user.type(aliceToPayInput, "2000");
-		await user.clear(bobPaidInput);
-		await user.type(bobPaidInput, "2000");
-		await user.clear(bobToPayInput);
-		await user.type(bobToPayInput, "2000");
+		await waitFor(() =>
+			expect(screen.getAllByLabelText("Jane").length).toBe(2),
+		);
+		const [JohnPaidInput, JohnToPayInput] = screen.getAllByLabelText("John");
+		const [JanePaidInput, JaneToPayInput] = screen.getAllByLabelText("Jane");
+		// 例: John/Janeとも支払金額2000、支払うべき金額2000
+		await user.clear(JohnPaidInput);
+		await user.type(JohnPaidInput, "2000");
+		await user.clear(JohnToPayInput);
+		await user.type(JohnToPayInput, "2000");
+		await user.clear(JanePaidInput);
+		await user.type(JanePaidInput, "2000");
+		await user.clear(JaneToPayInput);
+		await user.type(JaneToPayInput, "2000");
 		await user.click(screen.getByRole("button", { name: /更新/ }));
 		await waitFor(() => {
 			expect(purchasersPurchasesPatchSpy).toHaveBeenCalledWith({

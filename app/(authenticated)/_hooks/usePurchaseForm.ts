@@ -16,6 +16,7 @@ const usePurchaseForm = (
 	purchaseIdForUpdate?: number,
 	formDefaultValues?: PurchaseFormValues,
 	onSuccessUpdatePurchase?: () => void,
+	onSuccessCreatePurchase?: () => void,
 ) => {
 	const supabase = createClient();
 	const queryClient = useQueryClient();
@@ -82,6 +83,7 @@ const usePurchaseForm = (
 		onSuccess: () => {
 			form.reset();
 			toast.success("購入品を追加しました");
+			onSuccessCreatePurchase?.();
 		},
 		throwOnError: true,
 	});

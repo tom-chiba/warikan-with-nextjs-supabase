@@ -3,7 +3,7 @@ import type { Database } from "@/database.types";
 import { server } from "@/tests/mocks/node";
 import { TSQWrapper, user } from "@/tests/vitest/setup";
 import { render, screen, waitFor } from "@testing-library/react";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import { http, HttpResponse, type PathParams } from "msw";
 import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -12,6 +12,10 @@ type PurchasersPurchasesInsert =
 	Database["public"]["Tables"]["purchasers_purchases"]["Insert"];
 type PurchasesInsert = Database["public"]["Tables"]["purchases"]["Insert"];
 type PurchasesRow = Database["public"]["Tables"]["purchases"]["Row"];
+
+type PurchasesSelect = Database["public"]["Tables"]["purchases"]["Row"] & {
+	purchasers_purchases: Database["public"]["Tables"]["purchasers_purchases"]["Row"][];
+};
 
 const initialPurchasers: ComponentProps<
 	typeof ClientForm
@@ -278,5 +282,181 @@ describe("ClientForm", () => {
 				]),
 			);
 		});
+	});
+
+	it("初期状態で今日の未精算購入品がカンマ区切りで表示される", async () => {
+		const today = new Date();
+		const yyyyMMdd = format(today, "yyyy-MM-dd");
+		server.use(
+			http.get("*/rest/v1/purchases*", ({ request }) => {
+				const url = new URL(request.url);
+				const isSettled = url.searchParams.get("is_settled");
+				const purchaseDate = url.searchParams.get("purchase_date");
+				if (isSettled === "eq.false" && purchaseDate === `eq.${yyyyMMdd}`) {
+					const data: PurchasesSelect[] = [
+						{
+							id: 100,
+							created_at: new Date().toISOString(),
+							is_settled: false,
+							note: "",
+							purchase_date: yyyyMMdd,
+							title: "初期A",
+							user_id: "",
+							purchasers_purchases: [],
+						},
+						{
+							id: 101,
+							created_at: new Date().toISOString(),
+							is_settled: false,
+							note: "",
+							purchase_date: yyyyMMdd,
+							title: "初期B",
+							user_id: "",
+							purchasers_purchases: [],
+						},
+					];
+					return HttpResponse.json(data);
+				}
+				return HttpResponse.json([]);
+			}),
+		);
+		render(<ClientForm initialPurchasers={initialPurchasers} />, {
+			wrapper: TSQWrapper,
+		});
+		expect(await screen.findByText("初期A, 初期B")).toBeInTheDocument();
+	});
+
+	it("購入日を変更したら、その新しい日付の未精算リストに切り替わる", async () => {
+		const yyyyMMdd = format(new Date(), "yyyy-MM-dd");
+		const yyyyMMdd2 = format(subDays(new Date(), 1), "yyyy-MM-dd");
+		server.use(
+			http.get("*/rest/v1/purchases*", ({ request }) => {
+				const url = new URL(request.url);
+				const isSettled = url.searchParams.get("is_settled");
+				const purchaseDate = url.searchParams.get("purchase_date");
+				if (isSettled === "eq.false" && purchaseDate === `eq.${yyyyMMdd}`) {
+					return HttpResponse.json([
+						{
+							id: 20,
+							created_at: new Date().toISOString(),
+							is_settled: false,
+							note: "",
+							purchase_date: yyyyMMdd,
+							title: "Day1-A",
+							user_id: "",
+							purchasers_purchases: [],
+						},
+					]);
+				}
+				if (isSettled === "eq.false" && purchaseDate === `eq.${yyyyMMdd2}`) {
+					return HttpResponse.json([
+						{
+							id: 21,
+							created_at: new Date().toISOString(),
+							is_settled: false,
+							note: "",
+							purchase_date: yyyyMMdd2,
+							title: "Day2-X",
+							user_id: "",
+							purchasers_purchases: [],
+						},
+					]);
+				}
+				return HttpResponse.json([]);
+			}),
+		);
+		render(<ClientForm initialPurchasers={initialPurchasers} />, {
+			wrapper: TSQWrapper,
+		});
+
+		expect(await screen.findByText("Day1-A")).toBeInTheDocument();
+
+		await user.click(screen.getByRole("button", { name: "購入日" }));
+		await user.keyboard("{ArrowLeft}{Enter}");
+		expect(screen.queryByText("Day1-A")).not.toBeInTheDocument();
+		expect(await screen.findByText("Day2-X")).toBeInTheDocument();
+	});
+	it("購入品追加後、未精算リスト取得APIが呼ばれる", async () => {
+		const purchasePostSpy = vi.fn();
+		const getUnsettledSpy = vi.fn();
+		const today = new Date();
+		const yyyyMMdd = format(today, "yyyy-MM-dd");
+		server.use(
+			http.post<PathParams, PurchasesInsert, PurchasesRow[]>(
+				"*/rest/v1/purchases",
+				async ({ request }) => {
+					const body = await request.json();
+					purchasePostSpy(body);
+					return HttpResponse.json([
+						{
+							id: 999,
+							created_at: new Date().toISOString(),
+							is_settled: false,
+							note: body.note ?? "",
+							purchase_date: body.purchase_date ?? null,
+							title: body.title,
+							user_id: body.user_id ?? "",
+						},
+					]);
+				},
+			),
+			http.post<PathParams, PurchasersPurchasesInsert[], null>(
+				"*/rest/v1/purchasers_purchases",
+				async ({ request }) => {
+					return new HttpResponse(null, { status: 201 });
+				},
+			),
+		);
+		render(<ClientForm initialPurchasers={initialPurchasers} />, {
+			wrapper: TSQWrapper,
+		});
+
+		// 購入品名・金額入力
+		await user.type(screen.getByLabelText("購入品名"), "追加テスト");
+		const amountInputs1 = screen.getAllByLabelText("テストユーザー1");
+		const amountInputs2 = screen.getAllByLabelText("テストユーザー2");
+		await user.click(amountInputs1[0]);
+		await user.type(amountInputs1[0], "{selectall}{backspace}1000");
+		await user.click(amountInputs2[0]);
+		await user.type(amountInputs2[0], "{selectall}{backspace}0");
+		await user.click(amountInputs1[1]);
+		await user.type(amountInputs1[1], "{selectall}{backspace}1000");
+		await user.click(amountInputs2[1]);
+		await user.type(amountInputs2[1], "{selectall}{backspace}0");
+
+		server.use(
+			http.get("*/rest/v1/purchases*", async ({ request }) => {
+				const url = new URL(request.url);
+				const isSettled = url.searchParams.get("is_settled");
+				const purchaseDate = url.searchParams.get("purchase_date");
+				if (isSettled === "eq.false" && purchaseDate === `eq.${yyyyMMdd}`) {
+					getUnsettledSpy();
+					return HttpResponse.json([
+						{
+							id: 100,
+							created_at: new Date().toISOString(),
+							is_settled: false,
+							note: "",
+							purchase_date: yyyyMMdd,
+							title: "追加後A",
+							user_id: "",
+							purchasers_purchases: [],
+						},
+					]);
+				}
+				return HttpResponse.json([]);
+			}),
+		);
+
+		expect(
+			await screen.findByText("未精算購入1, 未精算購入2"),
+		).toBeInTheDocument();
+		await user.click(screen.getByRole("button", { name: "追加" }));
+
+		await waitFor(() => {
+			expect(getUnsettledSpy).toHaveBeenCalledAfter(purchasePostSpy);
+		});
+		expect(await screen.findByText("購入品を追加しました")).toBeInTheDocument();
+		expect(await screen.findByText("追加後A")).toBeInTheDocument();
 	});
 });

@@ -10,8 +10,8 @@ type PurchaserInsert = Database["public"]["Tables"]["purchasers"]["Insert"];
 type Purchaser = Database["public"]["Tables"]["purchasers"]["Row"];
 
 const initialPurchasers = [
-	{ id: 1, name: "Alice" },
-	{ id: 2, name: "Bob" },
+	{ id: 1, name: "John" },
+	{ id: 2, name: "Jane" },
 ];
 
 describe("ClientPurchasersTable", () => {
@@ -20,7 +20,7 @@ describe("ClientPurchasersTable", () => {
 			wrapper: TSQWrapper,
 		});
 		await user.click(screen.getByText("追加"));
-		await user.type(screen.getByRole("textbox"), "Alice");
+		await user.type(screen.getByRole("textbox"), "John");
 		await user.click(screen.getByRole("button", { name: /Save/i }));
 		// 既に存在する名前なのでエラーが表示されることを期待
 		expect(
@@ -32,11 +32,11 @@ describe("ClientPurchasersTable", () => {
 		render(<ClientPurchasersTable initialPurchasers={initialPurchasers} />, {
 			wrapper: TSQWrapper,
 		});
-		// BobをAliceに変更しようとする
+		// JaneをJohnに変更しようとする
 		await user.click(screen.getAllByRole("button", { name: /Edit/i })[1]);
 		expect(await screen.findByRole("textbox")).toBeInTheDocument();
 		await user.clear(screen.getByRole("textbox"));
-		await user.type(screen.getByRole("textbox"), "Alice");
+		await user.type(screen.getByRole("textbox"), "John");
 		await user.click(screen.getByRole("button", { name: /Save/i }));
 		// 既に存在する名前なのでエラーが表示されることを期待
 		expect(
@@ -47,8 +47,8 @@ describe("ClientPurchasersTable", () => {
 		render(<ClientPurchasersTable initialPurchasers={initialPurchasers} />, {
 			wrapper: TSQWrapper,
 		});
-		expect(screen.getByText("Alice")).toBeInTheDocument();
-		expect(screen.getByText("Bob")).toBeInTheDocument();
+		expect(screen.getByText("John")).toBeInTheDocument();
+		expect(screen.getByText("Jane")).toBeInTheDocument();
 	});
 
 	it("新しい購入者が追加されるとAPIリクエストが正しく送信される", async () => {
@@ -117,7 +117,7 @@ describe("ClientPurchasersTable", () => {
 		});
 		expect(patchRequestSpy).toHaveBeenCalledWith({
 			id: "1",
-			body: { name: "Alice (edited)" },
+			body: { name: "John (edited)" },
 		});
 	});
 
@@ -162,8 +162,8 @@ describe("ClientPurchasersTable", () => {
 		render(<ClientPurchasersTable initialPurchasers={initialPurchasers} />, {
 			wrapper: TSQWrapper,
 		});
-		expect(screen.getByText("Alice")).toBeInTheDocument();
-		expect(screen.getByText("Bob")).toBeInTheDocument();
+		expect(screen.getByText("John")).toBeInTheDocument();
+		expect(screen.getByText("Jane")).toBeInTheDocument();
 		await user.click(screen.getByText("追加"));
 		await user.type(screen.getByRole("textbox"), "Charlie");
 		await user.click(screen.getByRole("button", { name: /Save/i }));

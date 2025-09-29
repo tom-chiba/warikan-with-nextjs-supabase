@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/utils/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useState } from "react";
@@ -33,6 +35,9 @@ export type ClientFormProps = {
 };
 
 const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
+	const supabase = createClient();
+	const queryClient = useQueryClient();
+
 	const [equallyDivideCheckIsChecked, setEquallyDivideCheckIsChecked] =
 		useState(true);
 	const [dateInputPopoverIsOpen, setDateInputPopoverIsOpen] = useState(false);
@@ -46,7 +51,40 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 		calculateDistributeRemainderRandomly,
 		watchedPurchasersAmountPaid,
 		purchasersAmountPaidSum,
-	} = usePurchaseForm(initialPurchasers);
+	} = usePurchaseForm(
+		initialPurchasers,
+		undefined,
+		undefined,
+		undefined,
+		() => {
+			queryClient.invalidateQueries({
+				queryKey: ["purchases", "unsettled", format(new Date(), "yyyy-MM-dd")],
+			});
+		},
+	);
+
+	const selectedDate = form.getValues("date");
+	const formattedSelectedDate = selectedDate
+		? format(selectedDate, "yyyy-MM-dd")
+		: undefined;
+
+	const sameDateUnsettledTitleCache = useQuery<string[]>({
+		queryKey: ["purchases", "unsettled", formattedSelectedDate],
+		queryFn: async () => {
+			if (!formattedSelectedDate) return [];
+			const { data, error } = await supabase
+				.from("purchases")
+				.select("id,title,purchase_date,is_settled")
+				.eq("is_settled", false)
+				.eq("purchase_date", formattedSelectedDate)
+				.order("created_at", { ascending: false });
+			if (error) throw new Error(error.message);
+			return data.map((x) => x.title);
+		},
+		enabled: !!formattedSelectedDate,
+	});
+
+	const sameDateList = sameDateUnsettledTitleCache.data ?? [];
 
 	return (
 		<Form {...form}>
@@ -81,7 +119,7 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 								<PopoverTrigger asChild>
 									<FormControl>
 										<Button
-											variant={"outline"}
+											variant="outline"
 											className={cn(
 												"w-[240px] pl-3 text-left font-normal",
 												!field.value && "text-muted-foreground",
@@ -113,10 +151,14 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 								</PopoverContent>
 							</Popover>
 							<FormMessage />
+							{sameDateList.length > 0 && (
+								<div className="mt-1 text-xs text-muted-foreground">
+									{sameDateList.join(", ")}
+								</div>
+							)}
 						</FormItem>
 					)}
 				/>
-
 				<FormField
 					control={form.control}
 					name="note"
@@ -148,7 +190,9 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 												name={`purchasersAmountPaid.${index}.amountPaid`}
 												render={({ field }) => (
 													<FormItem>
-														<FormLabel>{purchaserNames.data[index]}</FormLabel>
+														<FormLabel>
+															{purchaserNames.data?.[index] ?? ""}
+														</FormLabel>
 														<FormControl>
 															<Input
 																{...field}
@@ -239,7 +283,7 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 													<FormItem>
 														<div className="flex items-center justify-between">
 															<FormLabel>
-																{purchaserNames.data[index]}
+																{purchaserNames.data?.[index] ?? ""}
 															</FormLabel>
 															<Button
 																type="button"
@@ -303,7 +347,6 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 						</Card>
 					</>
 				)}
-
 				<Button type="submit">追加</Button>
 			</form>
 		</Form>
