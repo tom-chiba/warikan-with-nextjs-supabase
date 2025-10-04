@@ -1,7 +1,15 @@
 {
-    "permissions": {
-        "allow": [
-            
-        ]
-    }
+  "permissions": {
+    "allow": [
+      "Edit",
+      "MultiEdit",
+      "Write",
+      "Bash(npm run tsc)",
+      "Bash(npm run biome:*)",
+      "Bash(npm run test:comp)",
+      "Bash(mkdir:*)",
+      "Bash(git status)",
+      "Bash(git log)"
+    ]
+  }
 }
