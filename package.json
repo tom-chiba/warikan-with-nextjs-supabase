@@ -10,6 +10,7 @@
     "check": "run-s tsc biome:check",
     "gemini": "gemini",
     "gemini:flash": "gemini -m \"gemini-2.5-flash\"",
+    "claude": "claude",
     "test:comp": "vitest run",
     "test:comp:watch": "vitest",
     "test:e2e": "playwright test",
@@ -56,6 +57,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@anthropic-ai/claude-code": "^2.0.5",
     "@biomejs/biome": "1.8.3",
     "@google/gemini-cli": "^0.6.1",
     "@playwright/test": "^1.54.1",
