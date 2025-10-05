@@ -76,4 +76,71 @@ npm run test:comp
 npm run test:e2e
 ```
 
+## E2Eテストの実装
+
+重要な機能やユーザーフローについては、E2Eテストも実装してください：
+
+### Playwright E2Eテスト作成
+
+**frontend-test-implementer** サブエージェントでE2Eテストを実装：
+
+```bash
+Task(subagent_type="frontend-test-implementer",
+     prompt="購入品削除機能のE2Eテスト（tests/playwright/*.e2e.test.ts）を実装してください")
+```
+
+### Playwright MCPでの手動確認
+
+実装したE2Eテストの動作を **Playwright MCP** で確認：
+
+```bash
+# ブラウザ起動・操作
+mcp__playwright__browser_navigate(url="http://localhost:3000/unsettled")
+mcp__playwright__browser_snapshot()
+mcp__playwright__browser_click(element="削除ボタン", ref="...")
+```
+
+## サブエージェントの活用
+
+TDD実装フェーズでは、以下のサブエージェントを活用してください：
+
+### 🧪 テスト実装 (Red フェーズ)
+
+**frontend-test-implementer** エージェントを使用：
+- 失敗するテストケースの作成
+- MSWハンドラーの実装
+- テストデータ・モックの準備
+- テストファイル（`*.comp.test.tsx`）の作成
+
+### 💻 プロダクションコード実装 (Green フェーズ)
+
+**frontend-implementer** エージェントを使用：
+- コンポーネントの実装
+- カスタムフックの実装
+- ユーティリティ関数の実装
+- 型定義の作成
+
+### ✅ テスト実行 (各フェーズ)
+
+**frontend-test-runner** エージェントを使用：
+- テストの実行と結果確認
+- 失敗の原因分析
+- テストカバレッジの確認
+
+## サブエージェント実行例
+
+```bash
+# Redフェーズ: テスト実装
+Task(subagent_type="frontend-test-implementer",
+     prompt="ClientControlMenuコンポーネントの削除機能テストを実装してください")
+
+# Greenフェーズ: 実装
+Task(subagent_type="frontend-implementer",
+     prompt="ClientControlMenuの削除機能を実装してください")
+
+# テスト実行
+Task(subagent_type="frontend-test-runner",
+     prompt="ClientControlMenuのテストを実行してください")
+```
+
 **次のフェーズ**: 実装完了後は `/tdd-verify` で検証フェーズに進んでください。

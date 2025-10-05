@@ -32,6 +32,16 @@ npm run check
 
 ### 3. テスト実行
 
+**frontend-test-runner** サブエージェントを使用してテストを実行してください：
+
+```bash
+# サブエージェントでテスト実行
+Task(subagent_type="frontend-test-runner",
+     prompt="実装した機能のすべてのテストを実行して結果を報告してください")
+```
+
+または手動で実行：
+
 ```bash
 # コンポーネントテストを実行
 npm run test:comp
@@ -61,14 +71,40 @@ npm run test:e2e
 
 ### 5. 動作確認
 
+#### 開発サーバーでの確認
+
 ```bash
 # 開発サーバーで実際の動作を確認
 npm run dev
 ```
 
+#### MCPツールでの自動確認
+
+**Playwright MCP** を使用して自動でブラウザ操作・確認を実行できます：
+
+```bash
+# ブラウザで自動操作・確認
+mcp__playwright__browser_navigate(url="http://localhost:3000")
+mcp__playwright__browser_snapshot()  # ページ内容確認
+mcp__playwright__browser_click(...)  # UI操作テスト
+```
+
+**Chrome DevTools MCP** を使用してパフォーマンスやコンソールエラーを確認できます：
+
+```bash
+# コンソールエラーチェック
+mcp__chrome-devtools__list_console_messages()
+
+# パフォーマンストレース
+mcp__chrome-devtools__performance_start_trace(reload=true, autoStop=true)
+```
+
+#### 確認項目
+
 - ブラウザで実際の動作を確認する
 - 既存機能に影響がないか確認する（リグレッションテスト）
 - UI/UXが期待通りか確認する
+- コンソールエラーがないか確認する
 
 ### 6. ドキュメント更新
 
@@ -89,6 +125,30 @@ git status
 
 # コミット（Claude Codeに依頼可能）
 # 例: "購入品削除機能を実装（TDD）"
+```
+
+#### GitHub連携（オプション）
+
+**GitHub MCP** を使用してIssueやPRを作成できます：
+
+```bash
+# Issue作成
+mcp__github__create_issue(
+  owner="username",
+  repo="warikan-with-nextjs-supabase",
+  title="実装した機能のタイトル",
+  body="実装内容の詳細"
+)
+
+# PR作成（別ブランチで作業している場合）
+mcp__github__create_pull_request(
+  owner="username",
+  repo="warikan-with-nextjs-supabase",
+  title="feat: 実装した機能",
+  head="feature-branch",
+  base="main",
+  body="## 変更内容\n- ..."
+)
 ```
 
 ## チェックリスト
