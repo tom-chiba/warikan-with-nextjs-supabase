@@ -13,6 +13,7 @@
       "Bash(npm run biome:format)",
       "Bash(npm run check)",
       "Bash(npm run test:comp:*)",
+      "Bash(npm run test:e2e:*)",
       "Bash(mkdir:*)",
       "Bash(git status:*)",
       "Bash(git log:*)",
@@ -23,7 +24,15 @@
       "Bash(git remote)"
     ],
     "deny": [
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git clean:*)",
+      "Bash(git stash drop:*)",
+      "Bash(git stash clear:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git filter-branch:*)",
+      "Bash(git filter-repo:*)",
+      "Bash(git branch -D:*)",
+      "Bash(git rebase:*)"
     ]
   }
 }
