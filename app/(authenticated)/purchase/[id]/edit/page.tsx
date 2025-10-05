@@ -1,3 +1,4 @@
+import ErrorMessage from "@/components/ErrorMessage";
 import { createClient } from "@/utils/supabase/server";
 import { notFound } from "next/navigation";
 import PurchaseEditForm from "./PurchaseEditForm";
@@ -40,9 +41,12 @@ const PurchaseEditPage = async ({ params }: PurchaseEditPageProps) => {
 		.order("created_at", { ascending: true });
 
 	if (purchasersError) {
-		// TODO: エラーハンドリング
-		console.error(purchasersError);
-		return <p>Error</p>;
+		return (
+			<div className="p-4">
+				<h1 className="text-2xl font-bold mb-4">購入品編集ページ</h1>
+				<ErrorMessage message="メンバー情報の取得に失敗しました" />
+			</div>
+		);
 	}
 
 	const initialPurchase = {

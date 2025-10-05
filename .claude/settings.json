@@ -4,12 +4,25 @@
       "Edit",
       "MultiEdit",
       "Write",
+      "Bash(ls:*)",
+      "Bash(pwd:*)",
+      "Bash(grep:*)",
       "Bash(npm run tsc)",
-      "Bash(npm run biome:*)",
-      "Bash(npm run test:comp)",
+      "Bash(npm run biome:check)",
+      "Bash(npm run biome:format)",
+      "Bash(npm run check)",
+      "Bash(npm run test:comp:*)",
       "Bash(mkdir:*)",
-      "Bash(git status)",
-      "Bash(git log)"
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git diff:*)",
+      "Bash(git grep:*)",
+      "Bash(git branch)",
+      "Bash(git remote)"
+    ],
+    "deny": [
+      "Bash(git push:*)"
     ]
   }
 }

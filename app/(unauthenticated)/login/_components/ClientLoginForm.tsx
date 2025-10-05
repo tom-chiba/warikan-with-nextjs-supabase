@@ -1,6 +1,6 @@
 "use client";
 
-import Loader from "@/components/clients/Loader";
+import LoaderWithInert from "@/components/clients/LoaderWithInert";
 import { useTransition } from "react";
 import { signIn, signUp } from "../serverActions";
 
@@ -68,7 +68,7 @@ export default function ClientLoginForm({ message }: Props) {
 					</p>
 				)}
 			</form>
-			<Loader isLoading={isPending} />
+			{isPending && <LoaderWithInert />}
 		</div>
 	);
 }

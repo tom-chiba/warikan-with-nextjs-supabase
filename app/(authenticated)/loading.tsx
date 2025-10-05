@@ -1,5 +1,5 @@
-import Loader from "@/components/clients/Loader";
+import LoaderWithInert from "@/components/clients/LoaderWithInert";
 
 export default function Loading() {
-	return <Loader isLoading />;
+	return <LoaderWithInert />;
 }

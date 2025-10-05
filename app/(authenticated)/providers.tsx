@@ -1,6 +1,6 @@
 "use client";
 
-import Loader from "@/components/clients/Loader";
+import LoaderWithInert from "@/components/clients/LoaderWithInert";
 import {
 	QueryClient,
 	QueryClientProvider,
@@ -37,7 +37,7 @@ function Child({ children }: { children: ReactNode }) {
 	return (
 		<>
 			{children}
-			<Loader isLoading={!!isMutating} />
+			{!!isMutating && <LoaderWithInert />}
 		</>
 	);
 }

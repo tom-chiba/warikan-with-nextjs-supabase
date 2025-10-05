@@ -80,8 +80,10 @@
 ├── components/                  # 共有コンポーネント
 │   ├── ui/                     # shadcn/ui コンポーネント
 │   ├── clients/                # クライアントコンポーネント
+│   │   └── LoaderWithInert.tsx # Loader + inert制御（全画面ブロック用）
 │   ├── AuthButton.tsx
 │   ├── ErrorMessage.tsx
+│   ├── Loader.tsx              # ローディング表示（Server Component対応）
 │   └── NodataMessage.tsx
 │
 ├── utils/                       # ユーティリティ

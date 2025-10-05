@@ -1,7 +1,9 @@
 "use client";
 
 import ErrorMessage from "@/components/ErrorMessage";
+import Loader from "@/components/Loader";
 import NodataMessage from "@/components/NodataMessage";
+import LoaderWithInert from "@/components/clients/LoaderWithInert";
 import { GenericTable } from "@/components/ui/GenericTable";
 import { createClient } from "@/utils/supabase/client";
 import type { UseQueryDataAndStatus } from "@/utils/types";
@@ -123,13 +125,16 @@ const ClientSettledTable = ({
 		queryClient.invalidateQueries({ queryKey: ["purchases", "settled"] });
 	}, [queryClient]);
 
+	if (purchasesCache.isLoading) return <Loader />;
+	if (purchaseTableData.status === "error") return <ErrorMessage />;
+	if (deletePurchaseMutation.status === "error") return <ErrorMessage />;
+	if (unsettlePurchaseMutation.status === "error") return <ErrorMessage />;
+
 	return (
 		<>
-			{purchaseTableData.status === "error" ||
-			deletePurchaseMutation.status === "error" ||
-			unsettlePurchaseMutation.status === "error" ? (
-				<ErrorMessage />
-			) : purchaseTableData.data.length === 0 ? (
+			{deletePurchaseMutation.status === "pending" && <LoaderWithInert />}
+			{unsettlePurchaseMutation.status === "pending" && <LoaderWithInert />}
+			{purchaseTableData.data.length === 0 ? (
 				<NodataMessage />
 			) : (
 				<GenericTable
