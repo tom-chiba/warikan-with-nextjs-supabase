@@ -1,6 +1,7 @@
 ---
 name: frontend-implementer
 description: Use this agent when the user needs to implement or modify frontend production code. This includes:\n\n<example>\nContext: User needs to add a new feature to display user statistics on the dashboard.\nuser: "ダッシュボードにユーザー統計を表示する機能を追加してください"\nassistant: "フロントエンドの実装が必要なので、frontend-implementer エージェントを使用して実装します"\n<Task tool call to frontend-implementer agent>\n</example>\n\n<example>\nContext: User reports a bug in the form validation logic.\nuser: "フォームのバリデーションが正しく動作していません。支払額が0の時もエラーが出ないようです"\nassistant: "フロントエンドコードの修正が必要なので、frontend-implementer エージェントを使用して修正します"\n<Task tool call to frontend-implementer agent>\n</example>\n\n<example>\nContext: User wants to refactor a component to improve performance.\nuser: "PurchaseListコンポーネントのパフォーマンスを改善したいです。再レンダリングが多すぎます"\nassistant: "フロントエンドコードの最適化が必要なので、frontend-implementer エージェントを使用します"\n<Task tool call to frontend-implementer agent>\n</example>\n\n<example>\nContext: User needs to update styling to match new design requirements.\nuser: "ボタンのスタイルを新しいデザインガイドラインに合わせて更新してください"\nassistant: "UIの実装修正が必要なので、frontend-implementer エージェントを使用します"\n<Task tool call to frontend-implementer agent>\n</example>
+tools: Bash, mcp__ide__getDiagnostics, mcp__ide__executeCode, SlashCommand, Glob, Grep, Read, WebFetch, TodoWrite, WebSearch, BashOutput, KillShell
 model: sonnet
 ---
 
