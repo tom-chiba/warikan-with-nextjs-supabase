@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { createClient } from "@/utils/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Edit, Trash, X } from "lucide-react";
+import { Check, Edit, Loader2, Trash, X } from "lucide-react";
 import { useState } from "react";
 
 type ClientPurchasersTableProps = {
@@ -179,10 +179,16 @@ const ClientPurchasersTable = ({
 								<Button
 									size="icon"
 									onClick={() => endEditingPurchaserName("update")}
-									disabled={!inputPurchaser.name}
+									disabled={
+										!inputPurchaser.name || updatePurchaserMutation.isPending
+									}
 									aria-label="Save"
 								>
-									<Check className="h-4 w-4" />
+									{updatePurchaserMutation.isPending ? (
+										<Loader2 className="h-4 w-4 animate-spin" />
+									) : (
+										<Check className="h-4 w-4" />
+									)}
 								</Button>
 							) : (
 								<Button
@@ -216,10 +222,17 @@ const ClientPurchasersTable = ({
 								<Button
 									size="icon"
 									onClick={() => deletePurchaserMutation.mutate(purchaser.id)}
-									disabled={inputPurchaser !== undefined}
+									disabled={
+										inputPurchaser !== undefined ||
+										deletePurchaserMutation.isPending
+									}
 									aria-label="Delete"
 								>
-									<Trash className="h-4 w-4" />
+									{deletePurchaserMutation.isPending ? (
+										<Loader2 className="h-4 w-4 animate-spin" />
+									) : (
+										<Trash className="h-4 w-4" />
+									)}
 								</Button>
 							)}
 						</TableCell>
@@ -256,10 +269,16 @@ const ClientPurchasersTable = ({
 								<Button
 									size="icon"
 									onClick={() => endEditingPurchaserName("create")}
-									disabled={!inputPurchaser.name}
+									disabled={
+										!inputPurchaser.name || createPurchaserMutation.isPending
+									}
 									aria-label="Save"
 								>
-									<Check className="h-4 w-4" />
+									{createPurchaserMutation.isPending ? (
+										<Loader2 className="h-4 w-4 animate-spin" />
+									) : (
+										<Check className="h-4 w-4" />
+									)}
 								</Button>
 							</TableCell>
 							<TableCell>

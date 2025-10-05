@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/utils/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Ellipsis } from "lucide-react";
+import { Ellipsis, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 type ClientControlMenuProps = {
@@ -54,8 +54,13 @@ const ClientControlMenu = ({ purchaseId }: ClientControlMenuProps) => {
 				<DropdownMenuItem
 					className="h-12"
 					onClick={() => unsettlePurchaseMutation.mutate(purchaseId)}
+					disabled={unsettlePurchaseMutation.isPending}
 				>
-					未精算
+					{unsettlePurchaseMutation.isPending ? (
+						<Loader2 className="h-4 w-4 animate-spin" />
+					) : (
+						"未精算"
+					)}
 				</DropdownMenuItem>
 				<Link href={`/purchase/${purchaseId}/edit`}>
 					<DropdownMenuItem className="h-12">編集</DropdownMenuItem>
@@ -63,8 +68,13 @@ const ClientControlMenu = ({ purchaseId }: ClientControlMenuProps) => {
 				<DropdownMenuItem
 					className="h-12"
 					onClick={() => deletePurchaseMutation.mutate(purchaseId)}
+					disabled={deletePurchaseMutation.isPending}
 				>
-					削除
+					{deletePurchaseMutation.isPending ? (
+						<Loader2 className="h-4 w-4 animate-spin" />
+					) : (
+						"削除"
+					)}
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>

@@ -322,6 +322,85 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 - **カスタムフック**: ビジネスロジックは `_hooks/` ディレクトリに切り出し
 - **責務分離**: バリデーションスキーマ・初期値生成ロジックは外部ファイル化
 
+### ローディング表示の使い分けガイド
+
+#### 全画面ローディング
+
+##### Loaderコンポーネント (`components/Loader.tsx`)
+- **用途**: データフェッチ中の通常のローディング表示
+- **特徴**: 画面オーバーレイだが操作ブロックなし
+- **使用場所**:
+  - `useQuery`の`isLoading`条件分岐
+  - 一覧画面のリフレッシュ時
+
+```tsx
+if (purchasesCache.isLoading) return <Loader />;
+```
+
+##### LoaderWithInertコンポーネント (`components/clients/LoaderWithInert.tsx`)
+- **用途**: 操作ブロックが必要な重要処理中
+- **特徴**: `inert`属性で全画面操作を完全ブロック
+- **使用場所**:
+  - `loading.tsx`（ページ遷移）
+  - Server Actions実行中（`useTransition`の`isPending`）
+  - データ整合性が重要なMutation中
+
+```tsx
+// loading.tsx
+export default function Loading() {
+  return <LoaderWithInert />;
+}
+
+// Server Action実行中
+{isPending && <LoaderWithInert />}
+```
+
+#### ボタン内インラインローディング
+
+**規約**: `Loader2`アイコン (lucide-react) を標準とする
+
+- **理由**:
+  - 他のアイコン（Edit, Trash, Check等）と一貫性
+  - サイズ調整が容易（`h-4 w-4`等のクラス）
+  - `animate-spin`で簡潔に実装可能
+- **必須事項**: 全てのMutationで`mutation.isPending`を使用してボタンを制御すること
+
+**実装パターン**:
+
+```tsx
+// テキストボタンの場合（非推奨 - 可能な限りアイコンを使用）
+<Button
+  onClick={() => mutation.mutate(data)}
+  disabled={mutation.isPending}
+>
+  {mutation.isPending ? "処理中..." : "実行"}
+</Button>
+
+// アイコンボタンの場合（推奨）
+<Button
+  onClick={() => mutation.mutate(data)}
+  disabled={mutation.isPending}
+>
+  {mutation.isPending ? (
+    <Loader2 className="h-4 w-4 animate-spin" />
+  ) : (
+    <Check className="h-4 w-4" />
+  )}
+</Button>
+
+// DropdownMenuItemでのLoader2使用例
+<DropdownMenuItem
+  onClick={() => mutation.mutate(data)}
+  disabled={mutation.isPending}
+>
+  {mutation.isPending ? (
+    <Loader2 className="h-4 w-4 animate-spin" />
+  ) : (
+    "実行"
+  )}
+</DropdownMenuItem>
+```
+
 ### 型定義
 
 - **Database型**: `database.types.ts`（Supabase CLIで自動生成）

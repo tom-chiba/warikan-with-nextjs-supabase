@@ -128,9 +128,11 @@ const ClientUnsettledBlock = ({
 				<CardFooter className="flex justify-between">
 					<Button
 						onClick={() => settlePurchasesMutation.mutate(selectedPurchaseIds)}
-						disabled={!selectedPurchaseIds.length}
+						disabled={
+							!selectedPurchaseIds.length || settlePurchasesMutation.isPending
+						}
 					>
-						まとめて精算
+						{settlePurchasesMutation.isPending ? "精算中..." : "まとめて精算"}
 					</Button>
 				</CardFooter>
 			</Card>

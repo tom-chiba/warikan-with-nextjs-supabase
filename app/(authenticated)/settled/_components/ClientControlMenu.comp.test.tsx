@@ -63,4 +63,80 @@ describe("ClientControlMenu", () => {
 			expect(deleteSpy).toHaveBeenCalledWith("eq.1");
 		});
 	});
+
+	it("未精算mutation実行中、Loader2アイコンが表示される", async () => {
+		let resolveRequest: ((value: unknown) => void) | undefined;
+		const requestPromise = new Promise((resolve) => {
+			resolveRequest = resolve;
+		});
+
+		server.use(
+			http.patch("*/rest/v1/purchases*", async () => {
+				await requestPromise;
+				return HttpResponse.json([{ id: 1, is_settled: false }]);
+			}),
+		);
+
+		render(<ClientControlMenu purchaseId={1} />, { wrapper: TSQWrapper });
+		const trigger = screen.getByRole("button");
+		await userEvent.click(trigger);
+		const unsettleButton = await screen.findByText("未精算");
+		await userEvent.click(unsettleButton);
+
+		// mutation実行中は"処理中..."ではなくLoader2アイコンが表示される
+		await waitFor(() => {
+			expect(screen.queryByText("処理中...")).not.toBeInTheDocument();
+		});
+
+		// ドロップダウンメニューを再度開いて確認
+		const triggerAfterClick = screen.getByRole("button");
+		await userEvent.click(triggerAfterClick);
+
+		// animate-spinクラスを持つsvg要素が存在する
+		await waitFor(() => {
+			const spinner = document.querySelector("svg.animate-spin");
+			expect(spinner).toBeInTheDocument();
+		});
+
+		// リクエストを完了させる
+		if (resolveRequest) resolveRequest(null);
+	});
+
+	it("削除mutation実行中、Loader2アイコンが表示される", async () => {
+		let resolveRequest: ((value: unknown) => void) | undefined;
+		const requestPromise = new Promise((resolve) => {
+			resolveRequest = resolve;
+		});
+
+		server.use(
+			http.delete("*/rest/v1/purchases*", async () => {
+				await requestPromise;
+				return HttpResponse.json({});
+			}),
+		);
+
+		render(<ClientControlMenu purchaseId={1} />, { wrapper: TSQWrapper });
+		const trigger = screen.getByRole("button");
+		await userEvent.click(trigger);
+		const deleteButton = await screen.findByText("削除");
+		await userEvent.click(deleteButton);
+
+		// mutation実行中は"削除中..."ではなくLoader2アイコンが表示される
+		await waitFor(() => {
+			expect(screen.queryByText("削除中...")).not.toBeInTheDocument();
+		});
+
+		// ドロップダウンメニューを再度開いて確認
+		const triggerAfterClick = screen.getByRole("button");
+		await userEvent.click(triggerAfterClick);
+
+		// animate-spinクラスを持つsvg要素が存在する
+		await waitFor(() => {
+			const spinner = document.querySelector("svg.animate-spin");
+			expect(spinner).toBeInTheDocument();
+		});
+
+		// リクエストを完了させる
+		if (resolveRequest) resolveRequest(null);
+	});
 });

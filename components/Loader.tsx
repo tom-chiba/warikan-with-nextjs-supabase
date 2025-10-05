@@ -5,6 +5,19 @@ type LoaderProps = {
 	className?: string;
 };
 
+/**
+ * ローディングスピナーコンポーネント（Server Component対応）
+ *
+ * @description
+ * データフェッチ中やページ遷移時に表示するローディング表示。
+ * 全画面オーバーレイで表示されるが、ユーザーの操作はブロックしない。
+ *
+ * @usage
+ * - useQueryのisLoading時の条件分岐
+ * - Next.js loading.tsxでの使用（inertが不要な場合）
+ *
+ * @see LoaderWithInert - 操作ブロックが必要な場合はこちらを使用
+ */
 const Loader = ({ className }: LoaderProps) => {
 	return (
 		<div
