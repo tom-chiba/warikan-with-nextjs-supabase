@@ -3,6 +3,8 @@
     "allow": [
       "Edit",
       "MultiEdit",
+      "WebFetch",
+      "WebSearch",
       "Write",
       "Bash(ls:*)",
       "Bash(pwd:*)",
