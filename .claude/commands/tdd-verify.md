@@ -32,16 +32,6 @@ npm run check
 
 ### 3. テスト実行
 
-**frontend-test-runner** サブエージェントを使用してテストを実行してください：
-
-```bash
-# サブエージェントでテスト実行
-Task(subagent_type="frontend-test-runner",
-     prompt="実装した機能のすべてのテストを実行して結果を報告してください")
-```
-
-または手動で実行：
-
 ```bash
 # コンポーネントテストを実行
 npm run test:comp
