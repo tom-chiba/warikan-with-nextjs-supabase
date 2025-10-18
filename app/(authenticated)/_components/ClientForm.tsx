@@ -56,10 +56,16 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 		undefined,
 		undefined,
 		undefined,
-		() => {
-			queryClient.invalidateQueries({
-				queryKey: ["purchases", "same-date", format(new Date(), "yyyy-MM-dd")],
-			});
+		async (purchaseDate) => {
+			const formattedDate = purchaseDate
+				? format(purchaseDate, "yyyy-MM-dd")
+				: undefined;
+
+			if (formattedDate) {
+				await queryClient.invalidateQueries({
+					queryKey: ["purchases", "same-date", formattedDate],
+				});
+			}
 		},
 	);
 

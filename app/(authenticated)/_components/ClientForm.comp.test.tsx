@@ -400,7 +400,7 @@ describe("ClientForm", () => {
 			),
 			http.post<PathParams, PurchasersPurchasesInsert[], null>(
 				"*/rest/v1/purchasers_purchases",
-				async ({ request }) => {
+				async () => {
 					return new HttpResponse(null, { status: 201 });
 				},
 			),
@@ -455,5 +455,148 @@ describe("ClientForm", () => {
 		});
 		expect(await screen.findByText("購入品を追加しました")).toBeInTheDocument();
 		expect(await screen.findByText("追加後A")).toBeInTheDocument();
+	});
+
+	it("過去の日付を選択して購入品を追加した場合、その日付の同日リストが更新される", async () => {
+		const purchasePostSpy = vi.fn();
+		const getSameDateSpy = vi.fn();
+		const threeDaysAgo = subDays(new Date(), 3);
+		const threeDaysAgoStr = format(threeDaysAgo, "yyyy-MM-dd");
+		const todayStr = format(new Date(), "yyyy-MM-dd");
+
+		let sameDateCallCount = 0;
+
+		server.use(
+			http.post<PathParams, PurchasesInsert, PurchasesRow[]>(
+				"*/rest/v1/purchases",
+				async ({ request }) => {
+					const body = await request.json();
+					purchasePostSpy(body);
+					return HttpResponse.json([
+						{
+							id: 999,
+							created_at: new Date().toISOString(),
+							is_settled: false,
+							note: body.note ?? "",
+							purchase_date: body.purchase_date ?? null,
+							title: body.title,
+							user_id: body.user_id ?? "",
+						},
+					]);
+				},
+			),
+			http.post<PathParams, PurchasersPurchasesInsert[], null>(
+				"*/rest/v1/purchasers_purchases",
+				async () => {
+					return new HttpResponse(null, { status: 201 });
+				},
+			),
+			http.get("*/rest/v1/purchases*", ({ request }) => {
+				const url = new URL(request.url);
+				const purchaseDate = url.searchParams.get("purchase_date");
+
+				if (purchaseDate === `eq.${todayStr}`) {
+					return HttpResponse.json([
+						{
+							id: 1,
+							created_at: new Date().toISOString(),
+							is_settled: false,
+							note: "",
+							purchase_date: todayStr,
+							title: "今日の購入品A",
+							user_id: "",
+							purchasers_purchases: [],
+						},
+					]);
+				}
+
+				if (purchaseDate === `eq.${threeDaysAgoStr}`) {
+					sameDateCallCount++;
+					getSameDateSpy();
+
+					if (sameDateCallCount === 1) {
+						// 初回：既存の購入品のみ
+						return HttpResponse.json([
+							{
+								id: 100,
+								created_at: new Date().toISOString(),
+								is_settled: false,
+								note: "",
+								purchase_date: threeDaysAgoStr,
+								title: "過去の購入品X",
+								user_id: "",
+								purchasers_purchases: [],
+							},
+						]);
+					}
+					// 2回目：追加後の購入品も含む
+					return HttpResponse.json([
+						{
+							id: 100,
+							created_at: new Date().toISOString(),
+							is_settled: false,
+							note: "",
+							purchase_date: threeDaysAgoStr,
+							title: "過去の購入品X",
+							user_id: "",
+							purchasers_purchases: [],
+						},
+						{
+							id: 999,
+							created_at: new Date().toISOString(),
+							is_settled: false,
+							note: "",
+							purchase_date: threeDaysAgoStr,
+							title: "新規追加アイテム",
+							user_id: "",
+							purchasers_purchases: [],
+						},
+					]);
+				}
+				return HttpResponse.json([]);
+			}),
+		);
+
+		render(<ClientForm initialPurchasers={initialPurchasers} />, {
+			wrapper: TSQWrapper,
+		});
+
+		// 初期状態：今日の日付の同日リストが表示される
+		expect(await screen.findByText("今日の購入品A")).toBeInTheDocument();
+
+		// 購入日を3日前に変更
+		await user.click(screen.getByRole("button", { name: "購入日" }));
+		// 3回左矢印キーを押して3日前に移動
+		await user.keyboard("{ArrowLeft}{ArrowLeft}{ArrowLeft}{Enter}");
+
+		// 3日前の同日リストが表示される
+		expect(await screen.findByText("過去の購入品X")).toBeInTheDocument();
+		expect(screen.queryByText("今日の購入品A")).not.toBeInTheDocument();
+
+		// 購入品を追加
+		await user.type(screen.getByLabelText("購入品名"), "新規追加アイテム");
+		const amountInputs1 = screen.getAllByLabelText("テストユーザー1");
+		const amountInputs2 = screen.getAllByLabelText("テストユーザー2");
+		await user.click(amountInputs1[0]);
+		await user.type(amountInputs1[0], "{selectall}{backspace}1000");
+		await user.click(amountInputs2[0]);
+		await user.type(amountInputs2[0], "{selectall}{backspace}0");
+		await user.click(amountInputs1[1]);
+		await user.type(amountInputs1[1], "{selectall}{backspace}1000");
+		await user.click(amountInputs2[1]);
+		await user.type(amountInputs2[1], "{selectall}{backspace}0");
+
+		await user.click(screen.getByRole("button", { name: "追加" }));
+
+		// 追加後、3日前の同日リストが更新される
+		await waitFor(() => {
+			expect(getSameDateSpy).toHaveBeenCalledTimes(2);
+		});
+		expect(await screen.findByText("購入品を追加しました")).toBeInTheDocument();
+
+		// 新規追加アイテムが同日リストに含まれる
+		expect(
+			await screen.findByText("過去の購入品X, 新規追加アイテム"),
+		).toBeInTheDocument();
 	});
 });

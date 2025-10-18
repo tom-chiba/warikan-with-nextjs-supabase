@@ -16,7 +16,7 @@ const usePurchaseForm = (
 	purchaseIdForUpdate?: number,
 	formDefaultValues?: PurchaseFormValues,
 	onSuccessUpdatePurchase?: () => void,
-	onSuccessCreatePurchase?: () => void,
+	onSuccessCreatePurchase?: (purchaseDate?: Date) => Promise<void> | void,
 ) => {
 	const supabase = createClient();
 	const queryClient = useQueryClient();
@@ -80,12 +80,16 @@ const usePurchaseForm = (
 					`処理に失敗しました。purchases tableからid=${insertedPurchaseData.id}に紐づく行を削除してください。`,
 				);
 		},
-		onSuccess: () => {
-			form.reset();
+		onSuccess: async (_data, variables) => {
+			await onSuccessCreatePurchase?.(variables.date);
+			// 日付を保持したままフォームをリセット
+			form.reset({
+				...getPurchaseFormDefaultValues(purchaserNames.data ?? []),
+				date: variables.date,
+			});
 			toast.success("購入品を追加しました");
-			onSuccessCreatePurchase?.();
 		},
-		onError: (error) => {
+		onError: () => {
 			toast.error("購入品の追加に失敗しました");
 		},
 	});
@@ -140,7 +144,7 @@ const usePurchaseForm = (
 			onSuccessUpdatePurchase?.();
 			toast.success("購入品を更新しました");
 		},
-		onError: (error) => {
+		onError: () => {
 			toast.error("購入品の更新に失敗しました");
 		},
 	});
