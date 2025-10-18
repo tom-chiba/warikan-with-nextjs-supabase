@@ -85,7 +85,9 @@ const usePurchaseForm = (
 			toast.success("購入品を追加しました");
 			onSuccessCreatePurchase?.();
 		},
-		throwOnError: true,
+		onError: (error) => {
+			toast.error("購入品の追加に失敗しました");
+		},
 	});
 	const updatePurchaseMutation = useMutation({
 		mutationFn: async ({
@@ -138,7 +140,9 @@ const usePurchaseForm = (
 			onSuccessUpdatePurchase?.();
 			toast.success("購入品を更新しました");
 		},
-		throwOnError: true,
+		onError: (error) => {
+			toast.error("購入品の更新に失敗しました");
+		},
 	});
 
 	const purchaserNames: UseQueryDataAndStatus<string[]> =

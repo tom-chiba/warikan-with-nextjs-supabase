@@ -10,6 +10,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ellipsis, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 type ClientControlMenuProps = {
 	purchaseId: number;
@@ -30,6 +31,9 @@ const ClientControlMenu = ({ purchaseId }: ClientControlMenuProps) => {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["purchases"] });
 		},
+		onError: () => {
+			toast.error("削除に失敗しました");
+		},
 	});
 	const settlePurchaseMutation = useMutation({
 		mutationFn: async (purchaseId: number) => {
@@ -42,6 +46,9 @@ const ClientControlMenu = ({ purchaseId }: ClientControlMenuProps) => {
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["purchases"] });
+		},
+		onError: () => {
+			toast.error("精算処理に失敗しました");
 		},
 	});
 

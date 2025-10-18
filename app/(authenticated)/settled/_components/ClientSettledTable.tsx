@@ -9,6 +9,7 @@ import { createClient } from "@/utils/supabase/client";
 import type { UseQueryDataAndStatus } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { toast } from "sonner";
 import ClientControlMenu from "./ClientControlMenu";
 
 type ClientSettledTableProps = {
@@ -119,6 +120,9 @@ const ClientSettledTable = ({
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["purchases"] });
 		},
+		onError: () => {
+			toast.error("未精算への変更に失敗しました");
+		},
 	});
 
 	useEffect(() => {
@@ -127,8 +131,6 @@ const ClientSettledTable = ({
 
 	if (purchasesCache.isLoading) return <Loader />;
 	if (purchaseTableData.status === "error") return <ErrorMessage />;
-	if (deletePurchaseMutation.status === "error") return <ErrorMessage />;
-	if (unsettlePurchaseMutation.status === "error") return <ErrorMessage />;
 
 	return (
 		<>

@@ -15,6 +15,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Edit, Loader2, Trash, X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 type ClientPurchasersTableProps = {
 	initialPurchasers: {
@@ -58,6 +59,9 @@ const ClientPurchasersTable = ({
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["purchasers"] });
 		},
+		onError: () => {
+			toast.error("メンバーの追加に失敗しました");
+		},
 	});
 
 	const updatePurchaserMutation = useMutation({
@@ -72,6 +76,9 @@ const ClientPurchasersTable = ({
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["purchasers"] });
 		},
+		onError: () => {
+			toast.error("メンバー名の更新に失敗しました");
+		},
 	});
 
 	const deletePurchaserMutation = useMutation({
@@ -81,6 +88,9 @@ const ClientPurchasersTable = ({
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["purchasers"] });
+		},
+		onError: () => {
+			toast.error("メンバーの削除に失敗しました");
 		},
 	});
 

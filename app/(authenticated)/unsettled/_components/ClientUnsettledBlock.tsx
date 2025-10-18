@@ -13,6 +13,7 @@ import {
 import { createClient } from "@/utils/supabase/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 import ClientUnsettledTable from "./ClientUnsettledTable";
 
 type ClientUnsettledBlockProps = {
@@ -85,6 +86,9 @@ const ClientUnsettledBlock = ({
 		},
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["purchases"] });
+		},
+		onError: () => {
+			toast.error("精算処理に失敗しました");
 		},
 	});
 

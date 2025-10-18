@@ -230,6 +230,70 @@ const calculateDistributeRemainderRandomly = (amountPaidSum: number) => {
 };
 ```
 
+### エラーハンドリング
+
+**App Router標準機能を活用した統一的なエラー処理**
+
+#### Error Boundary
+
+**`app/(authenticated)/error.tsx`**:
+- Server Componentでスローされたエラーをキャッチ
+- shadcn/ui Buttonとlucide-react AlertCircleアイコンを使用
+- `reset()`関数で再試行機能を提供
+
+**`app/global-error.tsx`**:
+- ルートレイアウトのエラーをキャッチする最終的なフォールバック
+- 独自の`<html>`と`<body>`タグを定義
+
+**`app/not-found.tsx`**:
+- 404エラー専用のUI
+- ホームへのリンクを提供
+
+#### ErrorMessageコンポーネント
+
+**`components/ErrorMessage.tsx`**:
+- Props: `title?`, `message?`, `onRetry?`
+- AlertCircleアイコン表示
+- アクセシビリティ対応（`role="alert"`, `aria-live="assertive"`）
+- 再試行ボタン（オプショナル）
+
+**使用例**:
+```tsx
+<ErrorMessage
+  title="データ取得エラー"
+  message="メンバー情報の取得に失敗しました"
+  onRetry={() => refetch()}
+/>
+```
+
+#### TanStack Query エラーハンドリング
+
+**Mutationの統一パターン**:
+```tsx
+const mutation = useMutation({
+  mutationFn: async (data) => {
+    const { error } = await supabase.from("table").insert(data);
+    if (error) throw new Error(error.message);
+  },
+  onSuccess: () => {
+    toast.success("成功メッセージ");
+    queryClient.invalidateQueries({ queryKey: ["key"] });
+  },
+  onError: (error) => {
+    toast.error("エラーメッセージ");
+  },
+});
+```
+
+**重要**: Expected Errors（ユーザー修正可能なエラー）は`onError`でトースト通知し、Uncaught Exceptions（重大なエラー）のみError Boundaryに伝播させる。
+
+#### エラー処理の方針
+
+1. **Server Component**: エラーを`throw`して`error.tsx`でキャッチ
+2. **Client Component Mutation**: `onError`でトースト通知
+3. **Client Component Query**: エラー状態を保持し、必要に応じてErrorMessageコンポーネント表示
+4. **バリデーションエラー**: ローカルstateで管理し、インラインまたはErrorMessageで表示
+
 ## テスト構成
 
 ### コンポーネントテスト（Vitest）
