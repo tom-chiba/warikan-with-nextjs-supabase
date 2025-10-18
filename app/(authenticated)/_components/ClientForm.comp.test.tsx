@@ -284,15 +284,14 @@ describe("ClientForm", () => {
 		});
 	});
 
-	it("初期状態で今日の未精算購入品がカンマ区切りで表示される", async () => {
+	it("初期状態で今日の同日購入品がカンマ区切りで表示される", async () => {
 		const today = new Date();
 		const yyyyMMdd = format(today, "yyyy-MM-dd");
 		server.use(
 			http.get("*/rest/v1/purchases*", ({ request }) => {
 				const url = new URL(request.url);
-				const isSettled = url.searchParams.get("is_settled");
 				const purchaseDate = url.searchParams.get("purchase_date");
-				if (isSettled === "eq.false" && purchaseDate === `eq.${yyyyMMdd}`) {
+				if (purchaseDate === `eq.${yyyyMMdd}`) {
 					const data: PurchasesSelect[] = [
 						{
 							id: 100,
@@ -326,15 +325,14 @@ describe("ClientForm", () => {
 		expect(await screen.findByText("初期A, 初期B")).toBeInTheDocument();
 	});
 
-	it("購入日を変更したら、その新しい日付の未精算リストに切り替わる", async () => {
+	it("購入日を変更したら、その新しい日付の同日リストに切り替わる", async () => {
 		const yyyyMMdd = format(new Date(), "yyyy-MM-dd");
 		const yyyyMMdd2 = format(subDays(new Date(), 1), "yyyy-MM-dd");
 		server.use(
 			http.get("*/rest/v1/purchases*", ({ request }) => {
 				const url = new URL(request.url);
-				const isSettled = url.searchParams.get("is_settled");
 				const purchaseDate = url.searchParams.get("purchase_date");
-				if (isSettled === "eq.false" && purchaseDate === `eq.${yyyyMMdd}`) {
+				if (purchaseDate === `eq.${yyyyMMdd}`) {
 					return HttpResponse.json([
 						{
 							id: 20,
@@ -348,7 +346,7 @@ describe("ClientForm", () => {
 						},
 					]);
 				}
-				if (isSettled === "eq.false" && purchaseDate === `eq.${yyyyMMdd2}`) {
+				if (purchaseDate === `eq.${yyyyMMdd2}`) {
 					return HttpResponse.json([
 						{
 							id: 21,
@@ -376,9 +374,9 @@ describe("ClientForm", () => {
 		expect(screen.queryByText("Day1-A")).not.toBeInTheDocument();
 		expect(await screen.findByText("Day2-X")).toBeInTheDocument();
 	});
-	it("購入品追加後、未精算リスト取得APIが呼ばれる", async () => {
+	it("購入品追加後、同日リスト取得APIが呼ばれる", async () => {
 		const purchasePostSpy = vi.fn();
-		const getUnsettledSpy = vi.fn();
+		const getSameDateSpy = vi.fn();
 		const today = new Date();
 		const yyyyMMdd = format(today, "yyyy-MM-dd");
 		server.use(
@@ -427,10 +425,9 @@ describe("ClientForm", () => {
 		server.use(
 			http.get("*/rest/v1/purchases*", async ({ request }) => {
 				const url = new URL(request.url);
-				const isSettled = url.searchParams.get("is_settled");
 				const purchaseDate = url.searchParams.get("purchase_date");
-				if (isSettled === "eq.false" && purchaseDate === `eq.${yyyyMMdd}`) {
-					getUnsettledSpy();
+				if (purchaseDate === `eq.${yyyyMMdd}`) {
+					getSameDateSpy();
 					return HttpResponse.json([
 						{
 							id: 100,
@@ -454,7 +451,7 @@ describe("ClientForm", () => {
 		await user.click(screen.getByRole("button", { name: "追加" }));
 
 		await waitFor(() => {
-			expect(getUnsettledSpy).toHaveBeenCalledAfter(purchasePostSpy);
+			expect(getSameDateSpy).toHaveBeenCalledAfter(purchasePostSpy);
 		});
 		expect(await screen.findByText("購入品を追加しました")).toBeInTheDocument();
 		expect(await screen.findByText("追加後A")).toBeInTheDocument();

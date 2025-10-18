@@ -58,7 +58,7 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 		undefined,
 		() => {
 			queryClient.invalidateQueries({
-				queryKey: ["purchases", "unsettled", format(new Date(), "yyyy-MM-dd")],
+				queryKey: ["purchases", "same-date", format(new Date(), "yyyy-MM-dd")],
 			});
 		},
 	);
@@ -68,14 +68,13 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 		? format(selectedDate, "yyyy-MM-dd")
 		: undefined;
 
-	const sameDateUnsettledTitleCache = useQuery<string[]>({
-		queryKey: ["purchases", "unsettled", formattedSelectedDate],
+	const sameDateTitleCache = useQuery<string[]>({
+		queryKey: ["purchases", "same-date", formattedSelectedDate],
 		queryFn: async () => {
 			if (!formattedSelectedDate) return [];
 			const { data, error } = await supabase
 				.from("purchases")
 				.select("id,title,purchase_date,is_settled")
-				.eq("is_settled", false)
 				.eq("purchase_date", formattedSelectedDate)
 				.order("created_at", { ascending: false });
 			if (error) throw new Error(error.message);
@@ -84,7 +83,7 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 		enabled: !!formattedSelectedDate,
 	});
 
-	const sameDateList = sameDateUnsettledTitleCache.data ?? [];
+	const sameDateList = sameDateTitleCache.data ?? [];
 
 	return (
 		<Form {...form}>
