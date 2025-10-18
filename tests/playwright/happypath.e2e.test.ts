@@ -4,6 +4,64 @@ test.describe("ハッピーパス", () => {
 	test("ログインから精算、データ削除までの一連の操作が正常に完了すること", async ({
 		page,
 	}) => {
+		// 0. テストデータのクリーンアップ（前回失敗時の残骸を削除）
+		await test.step("クリーンアップ", async () => {
+			await page.goto("/member");
+
+			// 入力モードをキャンセル
+			const cancelButton = page.locator("button:has(svg.lucide-x)");
+			const cancelCount = await cancelButton.count();
+			if (cancelCount > 0) {
+				await cancelButton.first().click();
+				await page.waitForTimeout(200);
+			}
+
+			// 全ての既存メンバーを削除
+			let deleteButtons = page.locator("button:has(svg.lucide-trash)");
+			let deleteCount = await deleteButtons.count();
+
+			while (deleteCount > 0) {
+				await deleteButtons.first().click();
+				await page.waitForTimeout(500);
+
+				deleteButtons = page.locator("button:has(svg.lucide-trash)");
+				const newCount = await deleteButtons.count();
+
+				if (newCount >= deleteCount) break;
+
+				deleteCount = newCount;
+			}
+
+			// テスト購入品を削除
+			await page.goto("/unsettled");
+			const testPurchaseUnsettled = page.getByRole("row", {
+				name: /テスト購入品/,
+			});
+			const unsettledCount = await testPurchaseUnsettled.count();
+			if (unsettledCount > 0) {
+				await testPurchaseUnsettled
+					.locator("button:has(svg.lucide-ellipsis)")
+					.first()
+					.click();
+				await page.getByRole("menuitem", { name: "削除" }).click();
+				await expect(testPurchaseUnsettled).not.toBeVisible({ timeout: 5000 });
+			}
+
+			await page.goto("/settled");
+			const testPurchaseSettled = page.getByRole("row", {
+				name: /テスト購入品/,
+			});
+			const settledCount = await testPurchaseSettled.count();
+			if (settledCount > 0) {
+				await testPurchaseSettled
+					.locator("button:has(svg.lucide-ellipsis)")
+					.first()
+					.click();
+				await page.getByRole("menuitem", { name: "削除" }).click();
+				await expect(testPurchaseSettled).not.toBeVisible({ timeout: 5000 });
+			}
+		});
+
 		// 1. メンバーを2人追加する
 		await test.step("メンバー追加", async () => {
 			await page.goto("/member");
