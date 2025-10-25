@@ -2,7 +2,7 @@ import ClientPurchasersTable from "@/app/(authenticated)/member/_components/Clie
 import type { Database } from "@/database.types";
 import { server } from "@/tests/mocks/node";
 import { TSQWrapper, user } from "@/tests/vitest/setup";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { http, HttpResponse, type PathParams } from "msw";
 import { describe, expect, it, vi } from "vitest";
 
@@ -93,7 +93,6 @@ describe("ClientPurchasersTable", () => {
 					const body = await request.json();
 					const url = new URL(request.url);
 					const idParam = url.searchParams.get("id");
-					// id=eq.1 の形式なので数値部分だけ抜き出す
 					const id = idParam ? idParam.replace("eq.", "") : undefined;
 					patchRequestSpy({ id, body });
 					return HttpResponse.json({
@@ -121,6 +120,45 @@ describe("ClientPurchasersTable", () => {
 		});
 	});
 
+	it("削除ボタンをクリックすると確認ダイアログが表示される", async () => {
+		render(<ClientPurchasersTable initialPurchasers={initialPurchasers} />, {
+			wrapper: TSQWrapper,
+		});
+		await user.click(screen.getAllByRole("button", { name: /Delete/i })[0]);
+
+		expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+		expect(screen.getByText("メンバーを削除")).toBeInTheDocument();
+		expect(screen.getByText(/「John」を削除しますか？/)).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "キャンセル" }),
+		).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^削除$/ })).toBeInTheDocument();
+	});
+
+	it("キャンセルボタンをクリックするとダイアログが閉じて削除されない", async () => {
+		const deleteRequestSpy = vi.fn();
+		server.use(
+			http.delete("*/rest/v1/purchasers*", async () => {
+				deleteRequestSpy();
+				return new HttpResponse(null, { status: 204 });
+			}),
+		);
+		render(<ClientPurchasersTable initialPurchasers={initialPurchasers} />, {
+			wrapper: TSQWrapper,
+		});
+
+		await user.click(screen.getAllByRole("button", { name: /Delete/i })[0]);
+		expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+		await user.click(screen.getByRole("button", { name: "キャンセル" }));
+
+		await waitFor(() => {
+			expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+		});
+
+		expect(deleteRequestSpy).not.toHaveBeenCalled();
+		expect(screen.getByText("John")).toBeInTheDocument();
+	});
+
 	it("購入者が削除されるとAPIリクエストが正しく送信される", async () => {
 		const deleteRequestSpy = vi.fn();
 		server.use(
@@ -136,7 +174,11 @@ describe("ClientPurchasersTable", () => {
 			wrapper: TSQWrapper,
 		});
 		await user.click(screen.getAllByRole("button", { name: /Delete/i })[0]);
-		expect(deleteRequestSpy).toHaveBeenCalledWith("1");
+		await user.click(screen.getByRole("button", { name: /^削除$/ }));
+
+		await waitFor(() => {
+			expect(deleteRequestSpy).toHaveBeenCalledWith("1");
+		});
 	});
 
 	it("mutation時にAPIリクエストが正しく送信される", async () => {
@@ -169,6 +211,32 @@ describe("ClientPurchasersTable", () => {
 		await user.click(screen.getByRole("button", { name: /Save/i }));
 		await waitFor(() => {
 			expect(postRequestSpy).toHaveBeenCalledWith({ name: "Charlie" });
+		});
+	});
+
+	it("削除実行中、ダイアログの削除ボタンにLoader2アイコンが表示される", async () => {
+		server.use(
+			http.delete("*/rest/v1/purchasers*", async () => {
+				await new Promise((resolve) => setTimeout(resolve, 100));
+				return new HttpResponse(null, { status: 204 });
+			}),
+		);
+
+		render(<ClientPurchasersTable initialPurchasers={initialPurchasers} />, {
+			wrapper: TSQWrapper,
+		});
+
+		await user.click(screen.getAllByRole("button", { name: /Delete/i })[0]);
+		const dialog = await screen.findByRole("alertdialog");
+		const deleteButton = within(dialog).getByRole("button", { name: "削除" });
+		await user.click(deleteButton);
+
+		await waitFor(() => {
+			expect(within(dialog).getByLabelText("読み込み中")).toBeInTheDocument();
+		});
+
+		await waitFor(() => {
+			expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
 		});
 	});
 

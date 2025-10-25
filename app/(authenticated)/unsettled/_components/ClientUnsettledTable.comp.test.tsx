@@ -1,6 +1,6 @@
 import { server } from "@/tests/mocks/node";
 import { TSQWrapper, user } from "@/tests/vitest/setup";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { http, HttpResponse, type PathParams } from "msw";
 import { describe, expect, it } from "vitest";
 import ClientUnsettledTable from "./ClientUnsettledTable";
@@ -78,14 +78,12 @@ describe("ClientUnsettledTable", () => {
 			{ wrapper: TSQWrapper },
 		);
 
-		// メニューを開く
 		const menuButtons = screen.getAllByRole("button");
 		await user.click(menuButtons[0]);
-		// 精算ボタンを押す
 		const settleButton = await screen.findByText("精算");
 		await user.click(settleButton);
 
-		await screen.findByText("未精算購入1"); // レンダリング待ち
+		await screen.findByText("未精算購入1");
 
 		expect(patchSpy).toHaveBeenCalledWith(
 			expect.objectContaining({ is_settled: true }),
@@ -114,15 +112,20 @@ describe("ClientUnsettledTable", () => {
 			{ wrapper: TSQWrapper },
 		);
 
-		// メニューを開く
 		const menuButtons = screen.getAllByRole("button");
 		await user.click(menuButtons[0]);
-		// 削除ボタンを押す
-		const deleteButton = await screen.findByText("削除");
-		await user.click(deleteButton);
 
-		await screen.findByText("未精算購入2"); // レンダリング待ち
+		const deleteMenuItem = await screen.findByText("削除");
+		await user.click(deleteMenuItem);
 
-		expect(deleteSpy).toHaveBeenCalledWith("eq.1"); // id=1の削除
+		const dialog = await screen.findByRole("alertdialog");
+		const confirmDeleteButton = within(dialog).getByRole("button", {
+			name: "削除",
+		});
+		await user.click(confirmDeleteButton);
+
+		await screen.findByText("未精算購入2");
+
+		expect(deleteSpy).toHaveBeenCalledWith("eq.1");
 	});
 });

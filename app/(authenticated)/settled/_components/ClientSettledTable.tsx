@@ -160,7 +160,10 @@ const ClientSettledTable = ({
 							key: "menu",
 							header: "",
 							cell: (purchase) => (
-								<ClientControlMenu purchaseId={purchase.id} />
+								<ClientControlMenu
+									purchaseId={purchase.id}
+									purchaseTitle={purchase.title}
+								/>
 							),
 						},
 					]}

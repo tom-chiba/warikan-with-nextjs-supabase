@@ -1,6 +1,6 @@
 import { server } from "@/tests/mocks/node";
 import { TSQWrapper } from "@/tests/vitest/setup";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse, type PathParams } from "msw";
 import { describe, expect, it, vi } from "vitest";
@@ -42,6 +42,29 @@ describe("ClientControlMenu", () => {
 		});
 	});
 
+	it("削除メニュー項目をクリックすると確認ダイアログが表示される", async () => {
+		render(<ClientControlMenu purchaseId={1} purchaseTitle="テスト購入品" />, {
+			wrapper: TSQWrapper,
+		});
+
+		const trigger = screen.getByRole("button");
+		await userEvent.click(trigger);
+
+		const deleteMenuItem = await screen.findByText("削除");
+		await userEvent.click(deleteMenuItem);
+
+		const dialog = await screen.findByRole("alertdialog");
+		expect(dialog).toBeInTheDocument();
+		expect(screen.getByText("購入品を削除")).toBeInTheDocument();
+		expect(
+			screen.getByText(/「テスト購入品」を削除しますか？/),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: "キャンセル" }),
+		).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^削除$/ })).toBeInTheDocument();
+	});
+
 	it("削除ボタンでDELETE APIが正しいクエリで呼ばれる", async () => {
 		const deleteSpy = vi.fn();
 		server.use(
@@ -54,11 +77,22 @@ describe("ClientControlMenu", () => {
 				},
 			),
 		);
-		render(<ClientControlMenu purchaseId={1} />, { wrapper: TSQWrapper });
+		render(<ClientControlMenu purchaseId={1} purchaseTitle="テスト購入品" />, {
+			wrapper: TSQWrapper,
+		});
+
 		const trigger = screen.getByRole("button");
 		await userEvent.click(trigger);
-		const deleteButton = await screen.findByText("削除");
-		await userEvent.click(deleteButton);
+
+		const deleteMenuItem = await screen.findByText("削除");
+		await userEvent.click(deleteMenuItem);
+
+		const dialog = await screen.findByRole("alertdialog");
+		const confirmDeleteButton = within(dialog).getByRole("button", {
+			name: "削除",
+		});
+		await userEvent.click(confirmDeleteButton);
+
 		await waitFor(() => {
 			expect(deleteSpy).toHaveBeenCalledWith("eq.1");
 		});
@@ -84,7 +118,6 @@ describe("ClientControlMenu", () => {
 		const settleButton = await screen.findByText("精算");
 		await userEvent.click(settleButton);
 
-		// mutationが実行されることを確認
 		await waitFor(() => {
 			expect(patchSpy).toHaveBeenCalledWith(
 				expect.objectContaining({ is_settled: true }),
@@ -109,25 +142,25 @@ describe("ClientControlMenu", () => {
 
 		const trigger = screen.getByRole("button");
 		await userEvent.click(trigger);
-		const deleteButton = await screen.findByText("削除");
-		await userEvent.click(deleteButton);
 
-		// mutationが実行されることを確認
+		const deleteMenuItem = await screen.findByText("削除");
+		await userEvent.click(deleteMenuItem);
+
+		const dialog = await screen.findByRole("alertdialog");
+		const confirmDeleteButton = within(dialog).getByRole("button", {
+			name: "削除",
+		});
+		await userEvent.click(confirmDeleteButton);
+
 		await waitFor(() => {
 			expect(deleteSpy).toHaveBeenCalledWith("eq.1");
 		});
 	});
 
 	it("精算mutation実行中、Loader2アイコンが表示される", async () => {
-		let resolveRequest: ((value: unknown) => void) | undefined;
-		const requestPromise = new Promise((resolve) => {
-			resolveRequest = resolve;
-		});
-
 		server.use(
 			http.patch("*/rest/v1/purchases*", async () => {
-				// テストが制御できるようにPromiseを保持
-				await requestPromise;
+				await new Promise((resolve) => setTimeout(resolve, 100));
 				return HttpResponse.json([{ id: 1, is_settled: true }]);
 			}),
 		);
@@ -138,60 +171,50 @@ describe("ClientControlMenu", () => {
 		const settleButton = await screen.findByText("精算");
 		await userEvent.click(settleButton);
 
-		// mutation実行中は"精算中..."ではなくLoader2アイコンが表示される
 		await waitFor(() => {
 			expect(screen.queryByText("精算中...")).not.toBeInTheDocument();
 		});
 
-		// ドロップダウンメニューを再度開いて確認
 		const triggerAfterClick = screen.getByRole("button");
 		await userEvent.click(triggerAfterClick);
 
-		// animate-spinクラスを持つsvg要素が存在する
 		await waitFor(() => {
-			const spinner = document.querySelector("svg.animate-spin");
-			expect(spinner).toBeInTheDocument();
+			expect(screen.getByLabelText("読み込み中")).toBeInTheDocument();
 		});
 
-		// リクエストを完了させる
-		if (resolveRequest) resolveRequest(null);
+		await waitFor(() => {
+			expect(screen.queryByLabelText("読み込み中")).not.toBeInTheDocument();
+		});
 	});
 
 	it("削除mutation実行中、Loader2アイコンが表示される", async () => {
-		let resolveRequest: ((value: unknown) => void) | undefined;
-		const requestPromise = new Promise((resolve) => {
-			resolveRequest = resolve;
-		});
-
 		server.use(
 			http.delete("*/rest/v1/purchases*", async () => {
-				await requestPromise;
+				await new Promise((resolve) => setTimeout(resolve, 100));
 				return HttpResponse.json({});
 			}),
 		);
 
 		render(<ClientControlMenu purchaseId={1} />, { wrapper: TSQWrapper });
+
 		const trigger = screen.getByRole("button");
 		await userEvent.click(trigger);
-		const deleteButton = await screen.findByText("削除");
-		await userEvent.click(deleteButton);
 
-		// mutation実行中は"削除中..."ではなくLoader2アイコンが表示される
+		const deleteMenuItem = await screen.findByText("削除");
+		await userEvent.click(deleteMenuItem);
+
+		const dialog = await screen.findByRole("alertdialog");
+		const confirmDeleteButton = within(dialog).getByRole("button", {
+			name: "削除",
+		});
+		await userEvent.click(confirmDeleteButton);
+
 		await waitFor(() => {
-			expect(screen.queryByText("削除中...")).not.toBeInTheDocument();
+			expect(within(dialog).getByLabelText("読み込み中")).toBeInTheDocument();
 		});
 
-		// ドロップダウンメニューを再度開いて確認
-		const triggerAfterClick = screen.getByRole("button");
-		await userEvent.click(triggerAfterClick);
-
-		// animate-spinクラスを持つsvg要素が存在する
 		await waitFor(() => {
-			const spinner = document.querySelector("svg.animate-spin");
-			expect(spinner).toBeInTheDocument();
+			expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
 		});
-
-		// リクエストを完了させる
-		if (resolveRequest) resolveRequest(null);
 	});
 });

@@ -22,6 +22,14 @@ test.describe("ハッピーパス", () => {
 
 			while (deleteCount > 0) {
 				await deleteButtons.first().click();
+
+				// 確認ダイアログの削除ボタンをクリック
+				await page.getByRole("alertdialog").waitFor({ state: "visible" });
+				await page
+					.getByRole("alertdialog")
+					.getByRole("button", { name: /^削除$/ })
+					.click();
+
 				await page.waitForTimeout(500);
 
 				deleteButtons = page.locator("button:has(svg.lucide-trash)");
@@ -44,6 +52,14 @@ test.describe("ハッピーパス", () => {
 					.first()
 					.click();
 				await page.getByRole("menuitem", { name: "削除" }).click();
+
+				// 確認ダイアログの削除ボタンをクリック
+				await page.getByRole("alertdialog").waitFor({ state: "visible" });
+				await page
+					.getByRole("alertdialog")
+					.getByRole("button", { name: /^削除$/ })
+					.click();
+
 				await expect(testPurchaseUnsettled).not.toBeVisible({ timeout: 5000 });
 			}
 
@@ -58,6 +74,14 @@ test.describe("ハッピーパス", () => {
 					.first()
 					.click();
 				await page.getByRole("menuitem", { name: "削除" }).click();
+
+				// 確認ダイアログの削除ボタンをクリック
+				await page.getByRole("alertdialog").waitFor({ state: "visible" });
+				await page
+					.getByRole("alertdialog")
+					.getByRole("button", { name: /^削除$/ })
+					.click();
+
 				await expect(testPurchaseSettled).not.toBeVisible({ timeout: 5000 });
 			}
 		});
@@ -145,6 +169,13 @@ test.describe("ハッピーパス", () => {
 			await settledRow.locator("button:has(svg.lucide-ellipsis)").click();
 			await page.getByRole("menuitem", { name: "削除" }).click();
 
+			// 確認ダイアログの削除ボタンをクリック
+			await page.getByRole("alertdialog").waitFor({ state: "visible" });
+			await page
+				.getByRole("alertdialog")
+				.getByRole("button", { name: /^削除$/ })
+				.click();
+
 			// 項目がリストから消えることを確認
 			await expect(settledRow).not.toBeVisible();
 		});
@@ -157,9 +188,23 @@ test.describe("ハッピーパス", () => {
 			const member1Row = page.getByRole("row", { name: /メンバー1/ });
 			await member1Row.locator("button:has(svg.lucide-trash)").click();
 
+			// 確認ダイアログの削除ボタンをクリック
+			await page.getByRole("alertdialog").waitFor({ state: "visible" });
+			await page
+				.getByRole("alertdialog")
+				.getByRole("button", { name: /^削除$/ })
+				.click();
+
 			// メンバー2を削除
 			const member2Row = page.getByRole("row", { name: /メンバー2/ });
 			await member2Row.locator("button:has(svg.lucide-trash)").click();
+
+			// 確認ダイアログの削除ボタンをクリック
+			await page.getByRole("alertdialog").waitFor({ state: "visible" });
+			await page
+				.getByRole("alertdialog")
+				.getByRole("button", { name: /^削除$/ })
+				.click();
 
 			// 項目がリストから消えることを確認
 			await expect(

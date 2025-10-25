@@ -10,6 +10,7 @@
       "Bash(pwd:*)",
       "Bash(grep:*)",
       "Bash(:* | grep:*)",
+      "Bash(cat:*)",
       "Bash(npm run tsc)",
       "Bash(npm run biome:check)",
       "Bash(npm run biome:format)",

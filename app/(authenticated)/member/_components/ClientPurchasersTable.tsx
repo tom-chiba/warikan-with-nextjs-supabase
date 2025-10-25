@@ -1,5 +1,14 @@
 "use client";
 
+import {
+	AlertDialog,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,7 +41,15 @@ const ClientPurchasersTable = ({
 
 	const [inputPurchaser, setInputPurchaser] = useState<
 		{ id: number | undefined; name: string } | undefined
-	>(undefined);
+	>();
+
+	const [deleteTarget, setDeleteTarget] = useState<
+		| {
+				id: number;
+				name: string;
+		  }
+		| undefined
+	>();
 
 	const purchasersCache = useQuery({
 		queryKey: ["purchasers"],
@@ -66,7 +83,7 @@ const ClientPurchasersTable = ({
 
 	const updatePurchaserMutation = useMutation({
 		mutationFn: async ({ id, newName }: { id: number; newName: string }) => {
-			const { data, error } = await supabase
+			const { error } = await supabase
 				.from("purchasers")
 				.update({ name: newName })
 				.eq("id", id)
@@ -87,6 +104,7 @@ const ClientPurchasersTable = ({
 			if (error) throw new Error(error.message);
 		},
 		onSuccess: () => {
+			setDeleteTarget(undefined);
 			queryClient.invalidateQueries({ queryKey: ["purchasers"] });
 		},
 		onError: () => {
@@ -143,179 +161,227 @@ const ClientPurchasersTable = ({
 	};
 
 	return (
-		<Table>
-			<TableHeader>
-				<TableRow>
-					<TableHead className="w-[200px]">名前</TableHead>
-					<TableHead className="w-[20px]" />
-					<TableHead className="w-[20px]" />
-				</TableRow>
-			</TableHeader>
-			<TableBody>
-				{purchasersCache.data.map((purchaser) => (
-					<TableRow key={purchaser.name}>
-						<TableCell className="font-medium">
-							{inputPurchaser?.id === purchaser.id ? (
-								<div>
-									<Input
-										autoFocus
-										value={inputPurchaser.name}
-										onChange={(e) =>
-											setInputPurchaser((prev) => {
-												if (!prev) return prev;
-												return {
-													...prev,
-													name: e.target.value,
-												};
-											})
-										}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") endEditingPurchaserName("update");
-										}}
-									/>
-									{errorMessage !== undefined && (
-										<span className="text-red-500 text-xs mt-0.5">
-											{errorMessage}
-										</span>
-									)}
-								</div>
-							) : (
-								<>{purchaser.name}</>
-							)}
-						</TableCell>
-
-						<TableCell>
-							{inputPurchaser?.id === purchaser.id ? (
-								<Button
-									size="icon"
-									onClick={() => endEditingPurchaserName("update")}
-									disabled={
-										!inputPurchaser.name || updatePurchaserMutation.isPending
-									}
-									aria-label="Save"
-								>
-									{updatePurchaserMutation.isPending ? (
-										<Loader2 className="h-4 w-4 animate-spin" />
-									) : (
-										<Check className="h-4 w-4" />
-									)}
-								</Button>
-							) : (
-								<Button
-									variant="outline"
-									size="icon"
-									onClick={() =>
-										setInputPurchaser({
-											id: purchaser.id,
-											name: purchaser.name,
-										})
-									}
-									disabled={inputPurchaser !== undefined}
-									aria-label="Edit"
-								>
-									<Edit className="h-4 w-4" />
-								</Button>
-							)}
-						</TableCell>
-
-						<TableCell>
-							{inputPurchaser?.id === purchaser.id ? (
-								<Button
-									variant="outline"
-									size="icon"
-									onClick={() => setInputPurchaser(undefined)}
-									aria-label="Cancel"
-								>
-									<X className="h-4 w-4" />
-								</Button>
-							) : (
-								<Button
-									size="icon"
-									onClick={() => deletePurchaserMutation.mutate(purchaser.id)}
-									disabled={
-										inputPurchaser !== undefined ||
-										deletePurchaserMutation.isPending
-									}
-									aria-label="Delete"
-								>
-									{deletePurchaserMutation.isPending ? (
-										<Loader2 className="h-4 w-4 animate-spin" />
-									) : (
-										<Trash className="h-4 w-4" />
-									)}
-								</Button>
-							)}
-						</TableCell>
+		<>
+			<Table>
+				<TableHeader>
+					<TableRow>
+						<TableHead className="w-[200px]">名前</TableHead>
+						<TableHead className="w-[20px]" />
+						<TableHead className="w-[20px]" />
 					</TableRow>
-				))}
-			</TableBody>
-			<TableFooter>
-				<TableRow>
-					{inputPurchaser && inputPurchaser.id === undefined ? (
-						<>
+				</TableHeader>
+				<TableBody>
+					{purchasersCache.data.map((purchaser) => (
+						<TableRow key={purchaser.name}>
+							<TableCell className="font-medium">
+								{inputPurchaser?.id === purchaser.id ? (
+									<div>
+										<Input
+											autoFocus
+											value={inputPurchaser.name}
+											onChange={(e) =>
+												setInputPurchaser((prev) => {
+													if (!prev) return prev;
+													return {
+														...prev,
+														name: e.target.value,
+													};
+												})
+											}
+											onKeyDown={(e) => {
+												if (e.key === "Enter")
+													endEditingPurchaserName("update");
+											}}
+										/>
+										{errorMessage !== undefined && (
+											<span className="text-red-500 text-xs mt-0.5">
+												{errorMessage}
+											</span>
+										)}
+									</div>
+								) : (
+									<>{purchaser.name}</>
+								)}
+							</TableCell>
+
 							<TableCell>
-								<div>
-									<Input
-										autoFocus
-										value={inputPurchaser?.name}
-										onChange={(e) =>
-											setInputPurchaser((prev) => {
-												if (!prev) return prev;
-												return { ...prev, name: e.target.value };
+								{inputPurchaser?.id === purchaser.id ? (
+									<Button
+										size="icon"
+										onClick={() => endEditingPurchaserName("update")}
+										disabled={
+											!inputPurchaser.name || updatePurchaserMutation.isPending
+										}
+										aria-label="Save"
+									>
+										{updatePurchaserMutation.isPending ? (
+											<Loader2 className="h-4 w-4 animate-spin" />
+										) : (
+											<Check className="h-4 w-4" />
+										)}
+									</Button>
+								) : (
+									<Button
+										variant="outline"
+										size="icon"
+										onClick={() =>
+											setInputPurchaser({
+												id: purchaser.id,
+												name: purchaser.name,
 											})
 										}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") endEditingPurchaserName("create");
-										}}
-									/>
-									{errorMessage !== undefined && (
-										<span className="text-red-500 text-xs mt-0.5">
-											{errorMessage}
-										</span>
-									)}
-								</div>
+										disabled={inputPurchaser !== undefined}
+										aria-label="Edit"
+									>
+										<Edit className="h-4 w-4" />
+									</Button>
+								)}
 							</TableCell>
+
 							<TableCell>
-								<Button
-									size="icon"
-									onClick={() => endEditingPurchaserName("create")}
-									disabled={
-										!inputPurchaser.name || createPurchaserMutation.isPending
-									}
-									aria-label="Save"
-								>
-									{createPurchaserMutation.isPending ? (
-										<Loader2 className="h-4 w-4 animate-spin" />
-									) : (
-										<Check className="h-4 w-4" />
-									)}
-								</Button>
+								{inputPurchaser?.id === purchaser.id ? (
+									<Button
+										variant="outline"
+										size="icon"
+										onClick={() => setInputPurchaser(undefined)}
+										aria-label="Cancel"
+									>
+										<X className="h-4 w-4" />
+									</Button>
+								) : (
+									<Button
+										size="icon"
+										onClick={() =>
+											setDeleteTarget({
+												id: purchaser.id,
+												name: purchaser.name,
+											})
+										}
+										disabled={
+											inputPurchaser !== undefined ||
+											deletePurchaserMutation.isPending
+										}
+										aria-label="Delete"
+									>
+										{deletePurchaserMutation.isPending ? (
+											<Loader2 className="h-4 w-4 animate-spin" />
+										) : (
+											<Trash className="h-4 w-4" />
+										)}
+									</Button>
+								)}
 							</TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+				<TableFooter>
+					<TableRow>
+						{inputPurchaser && inputPurchaser.id === undefined ? (
+							<>
+								<TableCell>
+									<div>
+										<Input
+											autoFocus
+											value={inputPurchaser?.name}
+											onChange={(e) =>
+												setInputPurchaser((prev) => {
+													if (!prev) return prev;
+													return { ...prev, name: e.target.value };
+												})
+											}
+											onKeyDown={(e) => {
+												if (e.key === "Enter")
+													endEditingPurchaserName("create");
+											}}
+										/>
+										{errorMessage !== undefined && (
+											<span className="text-red-500 text-xs mt-0.5">
+												{errorMessage}
+											</span>
+										)}
+									</div>
+								</TableCell>
+								<TableCell>
+									<Button
+										size="icon"
+										onClick={() => endEditingPurchaserName("create")}
+										disabled={
+											!inputPurchaser.name || createPurchaserMutation.isPending
+										}
+										aria-label="Save"
+									>
+										{createPurchaserMutation.isPending ? (
+											<Loader2 className="h-4 w-4 animate-spin" />
+										) : (
+											<Check className="h-4 w-4" />
+										)}
+									</Button>
+								</TableCell>
+								<TableCell>
+									<Button
+										variant="outline"
+										size="icon"
+										onClick={() => setInputPurchaser(undefined)}
+										aria-label="Cancel"
+									>
+										<X className="h-4 w-4" />
+									</Button>
+								</TableCell>
+							</>
+						) : (
 							<TableCell>
 								<Button
 									variant="outline"
-									size="icon"
-									onClick={() => setInputPurchaser(undefined)}
-									aria-label="Cancel"
+									onClick={() => setInputPurchaser({ id: undefined, name: "" })}
+									disabled={inputPurchaser !== undefined}
 								>
-									<X className="h-4 w-4" />
+									追加
 								</Button>
 							</TableCell>
-						</>
-					) : (
-						<TableCell>
-							<Button
-								variant="outline"
-								onClick={() => setInputPurchaser({ id: undefined, name: "" })}
-								disabled={inputPurchaser !== undefined}
-							>
-								追加
-							</Button>
-						</TableCell>
-					)}
-				</TableRow>
-			</TableFooter>
-		</Table>
+						)}
+					</TableRow>
+				</TableFooter>
+			</Table>
+
+			<AlertDialog
+				open={deleteTarget !== undefined}
+				onOpenChange={(open) => {
+					if (!open && !deletePurchaserMutation.isPending) {
+						setDeleteTarget(undefined);
+					}
+				}}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>メンバーを削除</AlertDialogTitle>
+						<AlertDialogDescription>
+							「{deleteTarget?.name}」を削除しますか？この操作は取り消せません。
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel disabled={deletePurchaserMutation.isPending}>
+							キャンセル
+						</AlertDialogCancel>
+						<Button
+							variant="destructive"
+							onClick={() =>
+								deleteTarget && deletePurchaserMutation.mutate(deleteTarget.id)
+							}
+							disabled={deletePurchaserMutation.isPending}
+						>
+							{deletePurchaserMutation.isPending ? (
+								<Loader2
+									className="h-4 w-4 animate-spin"
+									aria-label="読み込み中"
+								/>
+							) : (
+								"削除"
+							)}
+						</Button>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+		</>
 	);
 };
 export default ClientPurchasersTable;
