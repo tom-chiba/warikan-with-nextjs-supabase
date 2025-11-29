@@ -1,8 +1,8 @@
+import { render, screen, within } from "@testing-library/react";
+import { HttpResponse, http, type PathParams } from "msw";
+import { describe, expect, it } from "vitest";
 import { server } from "@/tests/mocks/node";
 import { TSQWrapper, user } from "@/tests/vitest/setup";
-import { render, screen, within } from "@testing-library/react";
-import { http, HttpResponse, type PathParams } from "msw";
-import { describe, expect, it } from "vitest";
 import ClientUnsettledTable from "./ClientUnsettledTable";
 
 const initialPurchases = [

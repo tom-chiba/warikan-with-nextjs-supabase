@@ -1,12 +1,12 @@
+import { render, screen, waitFor } from "@testing-library/react";
+import { format, subDays } from "date-fns";
+import { HttpResponse, http, type PathParams } from "msw";
+import type { ComponentProps } from "react";
+import { describe, expect, it, vi } from "vitest";
 import ClientForm from "@/app/(authenticated)/_components/ClientForm";
 import type { Database } from "@/database.types";
 import { server } from "@/tests/mocks/node";
 import { TSQWrapper, user } from "@/tests/vitest/setup";
-import { render, screen, waitFor } from "@testing-library/react";
-import { format, subDays } from "date-fns";
-import { http, HttpResponse, type PathParams } from "msw";
-import type { ComponentProps } from "react";
-import { describe, expect, it, vi } from "vitest";
 
 type PurchasersPurchasesInsert =
 	Database["public"]["Tables"]["purchasers_purchases"]["Insert"];

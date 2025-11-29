@@ -20,22 +20,10 @@ const ServerSettledTable = async () => {
 		.eq("is_settled", true)
 		.order("purchase_date", { ascending: false });
 
-	const { data: purchasersData, error: purchasersError } = await supabase
-		.from("purchasers")
-		.select("id, name")
-		.order("created_at", { ascending: true });
-
 	if (purchasesError) throw new Error(purchasesError.message);
-	if (purchasersError) throw new Error(purchasersError.message);
 
 	if (!purchasesData) return <NodataMessage />;
-	if (!purchasersData) return <NodataMessage />;
 
-	return (
-		<ClientSettledTable
-			initialPurchases={purchasesData}
-			initialPurchasers={purchasersData}
-		/>
-	);
+	return <ClientSettledTable initialPurchases={purchasesData} />;
 };
 export default ServerSettledTable;

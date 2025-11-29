@@ -1,5 +1,9 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, Edit, Loader2, Trash, X } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -21,10 +25,6 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { createClient } from "@/utils/supabase/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Edit, Loader2, Trash, X } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 
 type ClientPurchasersTableProps = {
 	initialPurchasers: {
@@ -200,7 +200,7 @@ const ClientPurchasersTable = ({
 										)}
 									</div>
 								) : (
-									<>{purchaser.name}</>
+									purchaser.name
 								)}
 							</TableCell>
 

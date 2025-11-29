@@ -1,6 +1,6 @@
-import LoaderWithInert from "@/components/clients/LoaderWithInert";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import LoaderWithInert from "@/components/clients/LoaderWithInert";
 
 describe("LoaderWithInert", () => {
 	it("Loaderコンポーネントを表示する", () => {

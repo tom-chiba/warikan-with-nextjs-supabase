@@ -1,10 +1,10 @@
+import { render, screen, waitFor } from "@testing-library/react";
+import { HttpResponse, http, type PathParams } from "msw";
+import { describe, expect, it, vi } from "vitest";
 import ClientUnsettledBlock from "@/app/(authenticated)/unsettled/_components/ClientUnsettledBlock";
 import type { Database } from "@/database.types";
 import { server } from "@/tests/mocks/node";
 import { TSQWrapper, user } from "@/tests/vitest/setup";
-import { render, screen, waitFor } from "@testing-library/react";
-import { http, HttpResponse, type PathParams } from "msw";
-import { describe, expect, it, vi } from "vitest";
 
 type PurchasesRow = Database["public"]["Tables"]["purchases"]["Row"];
 

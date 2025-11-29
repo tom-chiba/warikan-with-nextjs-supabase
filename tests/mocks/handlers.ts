@@ -1,6 +1,6 @@
-import type { Database } from "@/database.types";
 import { format, subDays } from "date-fns";
-import { http, HttpResponse, type PathParams } from "msw";
+import { HttpResponse, http, type PathParams } from "msw";
+import type { Database } from "@/database.types";
 
 type Purchaser = Database["public"]["Tables"]["purchasers"]["Row"];
 type PurchaseWithPurchasersPurchases =

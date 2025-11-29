@@ -21,6 +21,7 @@ type LoaderProps = {
 const Loader = ({ className }: LoaderProps) => {
 	return (
 		<div
+			role="status"
 			aria-label="読み込み中"
 			className={cn(
 				"fixed top-0 left-0 flex justify-center items-center w-full h-full bg-white bg-opacity-50",

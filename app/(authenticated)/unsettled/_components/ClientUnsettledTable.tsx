@@ -1,16 +1,16 @@
 "use client";
 
-import ErrorMessage from "@/components/ErrorMessage";
-import Loader from "@/components/Loader";
-import NodataMessage from "@/components/NodataMessage";
-import LoaderWithInert from "@/components/clients/LoaderWithInert";
-import { GenericTable } from "@/components/ui/GenericTable";
-import { Checkbox } from "@/components/ui/checkbox";
-import { createClient } from "@/utils/supabase/client";
-import type { UseQueryDataAndStatus } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import LoaderWithInert from "@/components/clients/LoaderWithInert";
+import ErrorMessage from "@/components/ErrorMessage";
+import Loader from "@/components/Loader";
+import NodataMessage from "@/components/NodataMessage";
+import { Checkbox } from "@/components/ui/checkbox";
+import { GenericTable } from "@/components/ui/GenericTable";
+import { createClient } from "@/utils/supabase/client";
+import type { UseQueryDataAndStatus } from "@/utils/types";
 import ClientControlMenu from "./ClientControlMenu";
 
 type ClientUnsettledTableProps = {
@@ -149,70 +149,65 @@ const ClientUnsettledTable = ({
 			{purchaseTableData.data.length === 0 ? (
 				<NodataMessage />
 			) : (
-				<>
-					<GenericTable
-						columns={[
-							{
-								key: "select",
-								header: (
-									<Checkbox
-										checked={getAllPurchasesAreChecked(purchasesCache.data)}
-										onCheckedChange={() =>
+				<GenericTable
+					columns={[
+						{
+							key: "select",
+							header: (
+								<Checkbox
+									checked={getAllPurchasesAreChecked(purchasesCache.data)}
+									onCheckedChange={() =>
+										onSelectPurchases(
+											getAllPurchasesAreChecked(purchasesCache.data)
+												? []
+												: getAllPurchaseIds(purchasesCache.data),
+										)
+									}
+								/>
+							),
+							cell: (purchase) => (
+								<Checkbox
+									checked={selectedPurchaseIds.includes(purchase.id)}
+									onCheckedChange={() => {
+										if (selectedPurchaseIds.includes(purchase.id)) {
 											onSelectPurchases(
-												getAllPurchasesAreChecked(purchasesCache.data)
-													? []
-													: getAllPurchaseIds(purchasesCache.data),
-											)
+												selectedPurchaseIds.filter((x) => x !== purchase.id),
+											);
+										} else {
+											onSelectPurchases([...selectedPurchaseIds, purchase.id]);
 										}
-									/>
-								),
-								cell: (purchase) => (
-									<Checkbox
-										checked={selectedPurchaseIds.includes(purchase.id)}
-										onCheckedChange={() => {
-											if (selectedPurchaseIds.includes(purchase.id)) {
-												onSelectPurchases(
-													selectedPurchaseIds.filter((x) => x !== purchase.id),
-												);
-											} else {
-												onSelectPurchases([
-													...selectedPurchaseIds,
-													purchase.id,
-												]);
-											}
-										}}
-									/>
-								),
-							},
-							{
-								key: "title",
-								header: "購入品名",
-								cell: (purchase) => purchase.title,
-							},
-							{
-								key: "date",
-								header: "購入日",
-								cell: (purchase) => purchase.date,
-							},
-							{
-								key: "totalAmount",
-								header: "合計金額(円)",
-								cell: (purchase) => purchase.totalAmount,
-							},
-							{
-								key: "menu",
-								header: "",
-								cell: (purchase) => (
-									<ClientControlMenu
-										purchaseId={purchase.id}
-										purchaseTitle={purchase.title}
-									/>
-								),
-							},
-						]}
-						data={purchaseTableData.data}
-					/>
-				</>
+									}}
+								/>
+							),
+						},
+						{
+							key: "title",
+							header: "購入品名",
+							cell: (purchase) => purchase.title,
+						},
+						{
+							key: "date",
+							header: "購入日",
+							cell: (purchase) => purchase.date,
+						},
+						{
+							key: "totalAmount",
+							header: "合計金額(円)",
+							cell: (purchase) => purchase.totalAmount,
+						},
+						{
+							key: "menu",
+							header: "",
+							cell: (purchase) => (
+								<ClientControlMenu
+									purchaseId={purchase.id}
+									purchaseTitle={purchase.title}
+								/>
+							),
+						},
+					]}
+					data={purchaseTableData.data}
+				/>
 			)}
 		</>
 	);

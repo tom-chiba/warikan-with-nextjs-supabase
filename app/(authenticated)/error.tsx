@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // biome-ignore lint/suspicious/noShadowRestrictedNames: Next.js error.tsx requires "Error" as function name
 export default function Error({

@@ -1,6 +1,6 @@
-import Loader from "@/components/Loader";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import Loader from "@/components/Loader";
 
 describe("Loader", () => {
 	it("ローディングスピナーが表示される", () => {

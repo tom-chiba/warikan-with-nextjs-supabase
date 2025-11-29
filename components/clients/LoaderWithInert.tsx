@@ -1,7 +1,7 @@
 "use client";
 
-import Loader from "@/components/Loader";
 import { useEffect } from "react";
+import Loader from "@/components/Loader";
 
 /**
  * inert属性付きローディングコンポーネント（Client Component）

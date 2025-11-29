@@ -1,15 +1,15 @@
 "use client";
 
-import ErrorMessage from "@/components/ErrorMessage";
-import Loader from "@/components/Loader";
-import NodataMessage from "@/components/NodataMessage";
-import LoaderWithInert from "@/components/clients/LoaderWithInert";
-import { GenericTable } from "@/components/ui/GenericTable";
-import { createClient } from "@/utils/supabase/client";
-import type { UseQueryDataAndStatus } from "@/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import LoaderWithInert from "@/components/clients/LoaderWithInert";
+import ErrorMessage from "@/components/ErrorMessage";
+import Loader from "@/components/Loader";
+import NodataMessage from "@/components/NodataMessage";
+import { GenericTable } from "@/components/ui/GenericTable";
+import { createClient } from "@/utils/supabase/client";
+import type { UseQueryDataAndStatus } from "@/utils/types";
 import ClientControlMenu from "./ClientControlMenu";
 
 type ClientSettledTableProps = {
@@ -26,15 +26,8 @@ type ClientSettledTableProps = {
 			amount_to_pay: number | null;
 		}[];
 	}[];
-	initialPurchasers: {
-		id: number;
-		name: string;
-	}[];
 };
-const ClientSettledTable = ({
-	initialPurchases,
-	initialPurchasers,
-}: ClientSettledTableProps) => {
+const ClientSettledTable = ({ initialPurchases }: ClientSettledTableProps) => {
 	const supabase = createClient();
 	const queryClient = useQueryClient();
 

@@ -1,14 +1,14 @@
 "use client";
 
-import LoaderWithInert from "@/components/clients/LoaderWithInert";
 import {
+	isServer,
 	QueryClient,
 	QueryClientProvider,
-	isServer,
 	useIsMutating,
 } from "@tanstack/react-query";
 import { ReactQueryStreamedHydration } from "@tanstack/react-query-next-experimental";
 import type { ReactNode } from "react";
+import LoaderWithInert from "@/components/clients/LoaderWithInert";
 
 function makeQueryClient() {
 	return new QueryClient({
@@ -22,7 +22,7 @@ function makeQueryClient() {
 	});
 }
 
-let browserQueryClient: QueryClient | undefined = undefined;
+let browserQueryClient: QueryClient | undefined;
 
 function getQueryClient() {
 	if (isServer) return makeQueryClient();

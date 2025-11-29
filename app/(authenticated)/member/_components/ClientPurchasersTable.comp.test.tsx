@@ -1,10 +1,10 @@
+import { render, screen, waitFor, within } from "@testing-library/react";
+import { HttpResponse, http, type PathParams } from "msw";
+import { describe, expect, it, vi } from "vitest";
 import ClientPurchasersTable from "@/app/(authenticated)/member/_components/ClientPurchasersTable";
 import type { Database } from "@/database.types";
 import { server } from "@/tests/mocks/node";
 import { TSQWrapper, user } from "@/tests/vitest/setup";
-import { render, screen, waitFor, within } from "@testing-library/react";
-import { http, HttpResponse, type PathParams } from "msw";
-import { describe, expect, it, vi } from "vitest";
 
 type PurchaserInsert = Database["public"]["Tables"]["purchasers"]["Insert"];
 type Purchaser = Database["public"]["Tables"]["purchasers"]["Row"];

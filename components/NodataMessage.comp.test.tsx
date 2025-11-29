@@ -1,6 +1,6 @@
-import NodataMessage from "@/components/NodataMessage";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import NodataMessage from "@/components/NodataMessage";
 
 describe("NodataMessage", () => {
 	it("データなしメッセージが表示されるべき", () => {

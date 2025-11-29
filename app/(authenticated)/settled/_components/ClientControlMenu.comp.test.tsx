@@ -1,9 +1,9 @@
-import { server } from "@/tests/mocks/node";
-import { TSQWrapper } from "@/tests/vitest/setup";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http, HttpResponse, type PathParams } from "msw";
+import { HttpResponse, http, type PathParams } from "msw";
 import { describe, expect, it, vi } from "vitest";
+import { server } from "@/tests/mocks/node";
+import { TSQWrapper } from "@/tests/vitest/setup";
 import ClientControlMenu from "./ClientControlMenu";
 
 describe("ClientControlMenu", () => {

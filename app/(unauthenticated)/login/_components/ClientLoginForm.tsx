@@ -1,7 +1,7 @@
 "use client";
 
-import LoaderWithInert from "@/components/clients/LoaderWithInert";
 import { useTransition } from "react";
+import LoaderWithInert from "@/components/clients/LoaderWithInert";
 import { signIn, signUp } from "../serverActions";
 
 type Props = {

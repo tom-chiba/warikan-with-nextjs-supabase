@@ -1,6 +1,6 @@
+import { notFound } from "next/navigation";
 import ErrorMessage from "@/components/ErrorMessage";
 import { createClient } from "@/utils/supabase/server";
-import { notFound } from "next/navigation";
 import PurchaseEditForm from "./PurchaseEditForm";
 
 type PurchaseEditPageProps = {

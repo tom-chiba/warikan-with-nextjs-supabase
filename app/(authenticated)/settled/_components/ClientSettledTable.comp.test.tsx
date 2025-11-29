@@ -1,12 +1,7 @@
-import ClientSettledTable from "@/app/(authenticated)/settled/_components/ClientSettledTable";
-import { TSQWrapper } from "@/tests/vitest/setup";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-
-const initialPurchasers = [
-	{ id: 1, name: "John" },
-	{ id: 2, name: "Jane" },
-];
+import ClientSettledTable from "@/app/(authenticated)/settled/_components/ClientSettledTable";
+import { TSQWrapper } from "@/tests/vitest/setup";
 
 const initialPurchases = [
 	{
@@ -35,29 +30,17 @@ const initialPurchases = [
 
 describe("ClientSettledTable", () => {
 	it("精算済みの購入品一覧が表示される", () => {
-		render(
-			<ClientSettledTable
-				initialPurchases={initialPurchases}
-				initialPurchasers={initialPurchasers}
-			/>,
-			{
-				wrapper: TSQWrapper,
-			},
-		);
+		render(<ClientSettledTable initialPurchases={initialPurchases} />, {
+			wrapper: TSQWrapper,
+		});
 		expect(screen.getByText("精算済み購入1")).toBeInTheDocument();
 		expect(screen.getByText("精算済み購入2")).toBeInTheDocument();
 	});
 
 	it("データがない場合はNodataMessageが表示される", () => {
-		render(
-			<ClientSettledTable
-				initialPurchases={[]}
-				initialPurchasers={initialPurchasers}
-			/>,
-			{
-				wrapper: TSQWrapper,
-			},
-		);
+		render(<ClientSettledTable initialPurchases={[]} />, {
+			wrapper: TSQWrapper,
+		});
 		expect(screen.getByText("データがありません")).toBeInTheDocument();
 	});
 });
