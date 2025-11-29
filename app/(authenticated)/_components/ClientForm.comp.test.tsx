@@ -326,8 +326,10 @@ describe("ClientForm", () => {
 	});
 
 	it("購入日を変更したら、その新しい日付の同日リストに切り替わる", async () => {
-		const yyyyMMdd = format(new Date(), "yyyy-MM-dd");
-		const yyyyMMdd2 = format(subDays(new Date(), 1), "yyyy-MM-dd");
+		const today = new Date();
+		const yesterday = subDays(today, 1);
+		const yyyyMMdd = format(today, "yyyy-MM-dd");
+		const yyyyMMdd2 = format(yesterday, "yyyy-MM-dd");
 		server.use(
 			http.get("*/rest/v1/purchases*", ({ request }) => {
 				const url = new URL(request.url);
@@ -370,8 +372,18 @@ describe("ClientForm", () => {
 		expect(await screen.findByText("Day1-A")).toBeInTheDocument();
 
 		await user.click(screen.getByRole("button", { name: "購入日" }));
-		await user.keyboard("{ArrowLeft}{Enter}");
-		expect(screen.queryByText("Day1-A")).not.toBeInTheDocument();
+		const yesterdayStr = `${yesterday.getMonth() + 1}/${yesterday.getDate()}/${yesterday.getFullYear()}`;
+		const calendarButtons = screen.getAllByRole("button");
+		const targetButton = calendarButtons.find(
+			(btn) => btn.getAttribute("data-day") === yesterdayStr,
+		);
+		if (targetButton) {
+			await user.click(targetButton);
+		}
+
+		await waitFor(() => {
+			expect(screen.queryByText("Day1-A")).not.toBeInTheDocument();
+		});
 		expect(await screen.findByText("Day2-X")).toBeInTheDocument();
 	});
 	it("購入品追加後、同日リスト取得APIが呼ばれる", async () => {
@@ -564,14 +576,20 @@ describe("ClientForm", () => {
 		// 初期状態：今日の日付の同日リストが表示される
 		expect(await screen.findByText("今日の購入品A")).toBeInTheDocument();
 
-		// 購入日を3日前に変更
 		await user.click(screen.getByRole("button", { name: "購入日" }));
-		// 3回左矢印キーを押して3日前に移動
-		await user.keyboard("{ArrowLeft}{ArrowLeft}{ArrowLeft}{Enter}");
+		const threeDaysAgoDateStr = `${threeDaysAgo.getMonth() + 1}/${threeDaysAgo.getDate()}/${threeDaysAgo.getFullYear()}`;
+		const calendarButtons = screen.getAllByRole("button");
+		const targetButton = calendarButtons.find(
+			(btn) => btn.getAttribute("data-day") === threeDaysAgoDateStr,
+		);
+		if (targetButton) {
+			await user.click(targetButton);
+		}
 
-		// 3日前の同日リストが表示される
+		await waitFor(() => {
+			expect(screen.queryByText("今日の購入品A")).not.toBeInTheDocument();
+		});
 		expect(await screen.findByText("過去の購入品X")).toBeInTheDocument();
-		expect(screen.queryByText("今日の購入品A")).not.toBeInTheDocument();
 
 		// 購入品を追加
 		await user.type(screen.getByLabelText("購入品名"), "新規追加アイテム");

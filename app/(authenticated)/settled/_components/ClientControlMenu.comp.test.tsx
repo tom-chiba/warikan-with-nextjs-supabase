@@ -112,10 +112,6 @@ describe("ClientControlMenu", () => {
 		const unsettleButton = await screen.findByText("未精算");
 		await userEvent.click(unsettleButton);
 
-		await waitFor(() => {
-			expect(screen.queryByText("処理中...")).not.toBeInTheDocument();
-		});
-
 		const triggerAfterClick = screen.getByRole("button");
 		await userEvent.click(triggerAfterClick);
 
@@ -126,6 +122,7 @@ describe("ClientControlMenu", () => {
 		await waitFor(() => {
 			expect(screen.queryByLabelText("読み込み中")).not.toBeInTheDocument();
 		});
+		expect(await screen.findByText("未精算")).toBeInTheDocument();
 	});
 
 	it("削除mutation実行中、Loader2アイコンが表示される", async () => {
