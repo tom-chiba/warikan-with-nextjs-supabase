@@ -469,6 +469,110 @@ describe("ClientForm", () => {
 		expect(await screen.findByText("追加後A")).toBeInTheDocument();
 	});
 
+	describe("支払額クリアボタン", () => {
+		it("支払額に0以外の値が入力されている場合、×ボタンが表示される", async () => {
+			render(<ClientForm initialPurchasers={initialPurchasers} />, {
+				wrapper: TSQWrapper,
+			});
+
+			// 等分スイッチをOFFにして、支払額のみにクリアボタンが表示されるようにする
+			const switchInput = screen.getByRole("switch", { name: "等分" });
+			await user.click(switchInput);
+
+			const amountPaidInputs = screen.getAllByLabelText("テストユーザー1");
+			await user.clear(amountPaidInputs[0]);
+			await user.type(amountPaidInputs[0], "1000");
+
+			const clearButtons = screen.getAllByRole("button", { name: /クリア/i });
+			expect(clearButtons.length).toBeGreaterThan(0);
+		});
+
+		it("支払額が初期値（0）の場合、×ボタンが表示されない", () => {
+			render(<ClientForm initialPurchasers={initialPurchasers} />, {
+				wrapper: TSQWrapper,
+			});
+
+			const clearButtons = screen.queryAllByRole("button", { name: /クリア/i });
+			expect(clearButtons).toHaveLength(0);
+		});
+
+		it("×ボタンをクリックすると支払額が0にクリアされる", async () => {
+			render(<ClientForm initialPurchasers={initialPurchasers} />, {
+				wrapper: TSQWrapper,
+			});
+
+			// 等分スイッチをOFFにして、支払額のみにクリアボタンが表示されるようにする
+			const switchInput = screen.getByRole("switch", { name: "等分" });
+			await user.click(switchInput);
+
+			const amountPaidInputs = screen.getAllByLabelText("テストユーザー1");
+			await user.clear(amountPaidInputs[0]);
+			await user.type(amountPaidInputs[0], "1000");
+
+			const clearButtons = screen.getAllByRole("button", { name: /クリア/i });
+			await user.click(clearButtons[0]);
+
+			expect(amountPaidInputs[0]).toHaveValue("0");
+		});
+	});
+
+	describe("割勘金額クリアボタン", () => {
+		it("割勘金額に0以外の値が入力されている場合、×ボタンが表示される", async () => {
+			render(<ClientForm initialPurchasers={initialPurchasers} />, {
+				wrapper: TSQWrapper,
+			});
+
+			// 等分スイッチをOFFにして手動入力可能にする
+			const switchInput = screen.getByRole("switch", { name: "等分" });
+			await user.click(switchInput);
+
+			// 割勘金額入力欄（2番目のテストユーザー1ラベル）
+			const allInputs = screen.getAllByLabelText("テストユーザー1");
+			const amountToPayInput = allInputs[1]; // 割勘金額入力欄
+			await user.clear(amountToPayInput);
+			await user.type(amountToPayInput, "500");
+
+			const clearButtons = screen.getAllByRole("button", { name: /クリア/i });
+			expect(clearButtons.length).toBeGreaterThan(0);
+		});
+
+		it("割勘金額が初期値（0）の場合、割勘金額欄の×ボタンが表示されない", async () => {
+			render(<ClientForm initialPurchasers={initialPurchasers} />, {
+				wrapper: TSQWrapper,
+			});
+
+			// 等分スイッチをOFFにして手動入力可能にする
+			const switchInput = screen.getByRole("switch", { name: "等分" });
+			await user.click(switchInput);
+
+			// 初期状態では割勘金額は0なので、×ボタンは表示されない
+			const clearButtons = screen.queryAllByRole("button", { name: /クリア/i });
+			expect(clearButtons).toHaveLength(0);
+		});
+
+		it("×ボタンをクリックすると割勘金額が0にクリアされる", async () => {
+			render(<ClientForm initialPurchasers={initialPurchasers} />, {
+				wrapper: TSQWrapper,
+			});
+
+			// 等分スイッチをOFFにして手動入力可能にする
+			const switchInput = screen.getByRole("switch", { name: "等分" });
+			await user.click(switchInput);
+
+			// 割勘金額入力欄に値を入力
+			const allInputs = screen.getAllByLabelText("テストユーザー1");
+			const amountToPayInput = allInputs[1];
+			await user.clear(amountToPayInput);
+			await user.type(amountToPayInput, "500");
+
+			// ×ボタンをクリック
+			const clearButtons = screen.getAllByRole("button", { name: /クリア/i });
+			await user.click(clearButtons[0]);
+
+			expect(amountToPayInput).toHaveValue("0");
+		});
+	});
+
 	it("過去の日付を選択して購入品を追加した場合、その日付の同日リストが更新される", async () => {
 		const purchasePostSpy = vi.fn();
 		const getSameDateSpy = vi.fn();
