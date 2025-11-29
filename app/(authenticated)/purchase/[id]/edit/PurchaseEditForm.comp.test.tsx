@@ -196,6 +196,51 @@ describe("PurchaseEditForm", () => {
 		});
 	});
 
+	describe("クリアボタン", () => {
+		it("金額に0以外の値が入力されている場合、×ボタンが表示される", async () => {
+			render(
+				<PurchaseEditForm
+					purchaseId={1}
+					initialPurchasers={initialPurchasers}
+					initialPurchase={initialPurchase}
+				/>,
+				{ wrapper: TSQWrapper },
+			);
+
+			// 初期状態では金額が入力されているので、クリアボタンが表示されている
+			await waitFor(() =>
+				expect(screen.getAllByLabelText("John").length).toBe(2),
+			);
+
+			const clearButtons = screen.getAllByRole("button", { name: /クリア/i });
+			expect(clearButtons.length).toBeGreaterThan(0);
+		});
+
+		it("×ボタンをクリックすると金額が0にクリアされる", async () => {
+			render(
+				<PurchaseEditForm
+					purchaseId={1}
+					initialPurchasers={initialPurchasers}
+					initialPurchase={initialPurchase}
+				/>,
+				{ wrapper: TSQWrapper },
+			);
+
+			await waitFor(() =>
+				expect(screen.getAllByLabelText("John").length).toBe(2),
+			);
+
+			const [JohnPaidInput] = screen.getAllByLabelText("John");
+			expect(JohnPaidInput).toHaveValue("1000");
+
+			// ×ボタンをクリック
+			const clearButtons = screen.getAllByRole("button", { name: /クリア/i });
+			await user.click(clearButtons[0]);
+
+			expect(JohnPaidInput).toHaveValue("0");
+		});
+	});
+
 	it("何も変更せずに更新した場合、APIリクエストが正しく送信される", async () => {
 		const patchRequestSpy = vi.fn();
 		const purchasersPurchasesPatchSpy = vi.fn();

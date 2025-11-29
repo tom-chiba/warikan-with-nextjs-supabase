@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import usePurchaseForm from "@/app/(authenticated)/_hooks/usePurchaseForm";
@@ -149,56 +149,98 @@ const PurchaseEditForm = ({
 							<CardContent>
 								<ul>
 									{purchasersAmountPaidFields.map((item, index) => (
-										<li key={item.id}>
+										<li key={item.id} className="py-4">
 											<FormField
 												control={form.control}
 												name={`purchasersAmountPaid.${index}.amountPaid`}
 												render={({ field }) => (
 													<FormItem>
 														<FormLabel>{purchaserNames.data[index]}</FormLabel>
-														<FormControl>
-															<Input
-																{...field}
-																onChange={(e) => {
-																	const inputValue = e.target.value;
-																	const inputValueAsNumber = Number(inputValue);
-																	if (
-																		!inputValue ||
-																		Number.isNaN(inputValueAsNumber)
-																	)
-																		field.onChange(inputValue);
-																	else field.onChange(inputValueAsNumber);
+														<div className="relative">
+															<FormControl>
+																<Input
+																	{...field}
+																	onChange={(e) => {
+																		const inputValue = e.target.value;
+																		const inputValueAsNumber =
+																			Number(inputValue);
+																		if (
+																			!inputValue ||
+																			Number.isNaN(inputValueAsNumber)
+																		)
+																			field.onChange(inputValue);
+																		else field.onChange(inputValueAsNumber);
 
-																	if (!equallyDivideCheckIsChecked) return;
+																		if (!equallyDivideCheckIsChecked) return;
 
-																	const amountPaidSum =
-																		watchedPurchasersAmountPaid.reduce(
-																			(
-																				accumulator,
-																				currentValue,
-																				currentIndex,
-																			) => {
-																				if (currentIndex === index)
+																		const amountPaidSum =
+																			watchedPurchasersAmountPaid.reduce(
+																				(
+																					accumulator,
+																					currentValue,
+																					currentIndex,
+																				) => {
+																					if (currentIndex === index)
+																						return (
+																							accumulator +
+																							Number(e.target.value ?? 0)
+																						);
 																					return (
 																						accumulator +
-																						Number(e.target.value ?? 0)
+																						Number(currentValue.amountPaid ?? 0)
 																					);
-																				return (
-																					accumulator +
-																					Number(currentValue.amountPaid ?? 0)
-																				);
-																			},
-																			0,
-																		);
+																				},
+																				0,
+																			);
 
-																	calculateDistributeRemainderRandomly(
-																		amountPaidSum,
-																	);
-																}}
-																placeholder="0"
-																inputMode="numeric"
-															/>
-														</FormControl>
+																		calculateDistributeRemainderRandomly(
+																			amountPaidSum,
+																		);
+																	}}
+																	placeholder="0"
+																	inputMode="numeric"
+																	className={
+																		field.value !== 0 && field.value !== ""
+																			? "pr-8"
+																			: ""
+																	}
+																/>
+															</FormControl>
+															{field.value !== 0 && field.value !== "" && (
+																<Button
+																	type="button"
+																	variant="ghost"
+																	size="icon"
+																	className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+																	onClick={() => {
+																		field.onChange(0);
+																		if (!equallyDivideCheckIsChecked) return;
+																		const amountPaidSum =
+																			watchedPurchasersAmountPaid.reduce(
+																				(
+																					accumulator,
+																					currentValue,
+																					currentIndex,
+																				) => {
+																					if (currentIndex === index)
+																						return accumulator;
+																					return (
+																						accumulator +
+																						Number(currentValue.amountPaid ?? 0)
+																					);
+																				},
+																				0,
+																			);
+																		calculateDistributeRemainderRandomly(
+																			amountPaidSum,
+																		);
+																	}}
+																>
+																	<X className="h-4 w-4" />
+																	<span className="sr-only">クリア</span>
+																</Button>
+															)}
+														</div>
 														<FormMessage />
 													</FormItem>
 												)}
@@ -282,23 +324,45 @@ const PurchaseEditForm = ({
 																残りを自動入力
 															</Button>
 														</div>
-														<FormControl>
-															<Input
-																{...field}
-																onChange={(e) => {
-																	const inputValue = e.target.value;
-																	const inputValueAsNumber = Number(inputValue);
-																	if (
-																		!inputValue ||
-																		Number.isNaN(inputValueAsNumber)
-																	)
-																		field.onChange(inputValue);
-																	else field.onChange(inputValueAsNumber);
-																}}
-																placeholder="0"
-																inputMode="numeric"
-															/>
-														</FormControl>
+														<div className="relative">
+															<FormControl>
+																<Input
+																	{...field}
+																	onChange={(e) => {
+																		const inputValue = e.target.value;
+																		const inputValueAsNumber =
+																			Number(inputValue);
+																		if (
+																			!inputValue ||
+																			Number.isNaN(inputValueAsNumber)
+																		)
+																			field.onChange(inputValue);
+																		else field.onChange(inputValueAsNumber);
+																	}}
+																	placeholder="0"
+																	inputMode="numeric"
+																	className={
+																		field.value !== 0 && field.value !== ""
+																			? "pr-8"
+																			: ""
+																	}
+																/>
+															</FormControl>
+															{field.value !== 0 && field.value !== "" && (
+																<Button
+																	type="button"
+																	variant="ghost"
+																	size="icon"
+																	className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+																	onClick={() => {
+																		field.onChange(0);
+																	}}
+																>
+																	<X className="h-4 w-4" />
+																	<span className="sr-only">クリア</span>
+																</Button>
+															)}
+														</div>
 														<FormMessage />
 													</FormItem>
 												)}
