@@ -1,5 +1,5 @@
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import styles from "./Loader.module.css";
 
 type LoaderProps = {
 	className?: string;
@@ -24,13 +24,11 @@ const Loader = ({ className }: LoaderProps) => {
 			role="status"
 			aria-label="読み込み中"
 			className={cn(
-				"fixed top-0 left-0 flex justify-center items-center w-full h-full bg-white bg-opacity-50",
+				"fixed top-0 left-0 flex justify-center items-center w-full h-full bg-white/50 dark:bg-black/50",
 				className,
 			)}
 		>
-			<div
-				className={`${styles.loader} w-12 p-2 aspect-square rounded-full bg-green-700`}
-			/>
+			<Loader2 className="h-12 w-12 animate-spin text-primary" />
 		</div>
 	);
 };
