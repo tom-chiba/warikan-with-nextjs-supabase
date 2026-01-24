@@ -37,5 +37,12 @@
       "Bash(git branch -D:*)",
       "Bash(git rebase:*)"
     ]
+  },
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "hookify@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true
   }
 }
