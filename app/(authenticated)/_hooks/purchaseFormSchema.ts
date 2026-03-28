@@ -70,7 +70,11 @@ export function getPurchaseFormDefaultValues(
 		title: "",
 		date: new Date(),
 		note: "",
-		purchasersAmountPaid: purchaserNames.map(() => ({ amountPaid: 0 })),
-		purchasersAmountToPay: purchaserNames.map(() => ({ amountToPay: 0 })),
+		purchasersAmountPaid: purchaserNames.map(() => ({
+			amountPaid: "" as const,
+		})),
+		purchasersAmountToPay: purchaserNames.map(() => ({
+			amountToPay: "" as const,
+		})),
 	};
 }
