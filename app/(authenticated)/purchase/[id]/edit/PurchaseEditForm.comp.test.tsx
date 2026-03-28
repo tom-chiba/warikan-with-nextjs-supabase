@@ -216,7 +216,7 @@ describe("PurchaseEditForm", () => {
 			expect(clearButtons.length).toBeGreaterThan(0);
 		});
 
-		it("×ボタンをクリックすると金額が0にクリアされる", async () => {
+		it("×ボタンをクリックすると金額が空にクリアされる", async () => {
 			render(
 				<PurchaseEditForm
 					purchaseId={1}
@@ -237,7 +237,7 @@ describe("PurchaseEditForm", () => {
 			const clearButtons = screen.getAllByRole("button", { name: /クリア/i });
 			await user.click(clearButtons[0]);
 
-			expect(JohnPaidInput).toHaveValue("0");
+			expect(JohnPaidInput).toHaveValue("");
 		});
 	});
 
