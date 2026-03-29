@@ -255,7 +255,7 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 																	size="icon"
 																	className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
 																	onClick={() => {
-																		field.onChange(0);
+																		field.onChange("");
 																		if (!equallyDivideCheckIsChecked) return;
 																		const amountPaidSum =
 																			watchedPurchasersAmountPaid.reduce(
@@ -397,7 +397,7 @@ const ClientForm = ({ initialPurchasers }: ClientFormProps) => {
 																	size="icon"
 																	className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
 																	onClick={() => {
-																		field.onChange(0);
+																		field.onChange("");
 																	}}
 																>
 																	<X className="h-4 w-4" />

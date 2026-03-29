@@ -487,7 +487,7 @@ describe("ClientForm", () => {
 			expect(clearButtons.length).toBeGreaterThan(0);
 		});
 
-		it("支払額が初期値（0）の場合、×ボタンが表示されない", () => {
+		it("支払額が初期値（空）の場合、×ボタンが表示されない", () => {
 			render(<ClientForm initialPurchasers={initialPurchasers} />, {
 				wrapper: TSQWrapper,
 			});
@@ -496,7 +496,7 @@ describe("ClientForm", () => {
 			expect(clearButtons).toHaveLength(0);
 		});
 
-		it("×ボタンをクリックすると支払額が0にクリアされる", async () => {
+		it("×ボタンをクリックすると支払額が空にクリアされる", async () => {
 			render(<ClientForm initialPurchasers={initialPurchasers} />, {
 				wrapper: TSQWrapper,
 			});
@@ -512,7 +512,7 @@ describe("ClientForm", () => {
 			const clearButtons = screen.getAllByRole("button", { name: /クリア/i });
 			await user.click(clearButtons[0]);
 
-			expect(amountPaidInputs[0]).toHaveValue("0");
+			expect(amountPaidInputs[0]).toHaveValue("");
 		});
 	});
 
@@ -536,7 +536,7 @@ describe("ClientForm", () => {
 			expect(clearButtons.length).toBeGreaterThan(0);
 		});
 
-		it("割勘金額が初期値（0）の場合、割勘金額欄の×ボタンが表示されない", async () => {
+		it("割勘金額が初期値（空）の場合、割勘金額欄の×ボタンが表示されない", async () => {
 			render(<ClientForm initialPurchasers={initialPurchasers} />, {
 				wrapper: TSQWrapper,
 			});
@@ -550,7 +550,7 @@ describe("ClientForm", () => {
 			expect(clearButtons).toHaveLength(0);
 		});
 
-		it("×ボタンをクリックすると割勘金額が0にクリアされる", async () => {
+		it("×ボタンをクリックすると割勘金額が空にクリアされる", async () => {
 			render(<ClientForm initialPurchasers={initialPurchasers} />, {
 				wrapper: TSQWrapper,
 			});
@@ -569,7 +569,7 @@ describe("ClientForm", () => {
 			const clearButtons = screen.getAllByRole("button", { name: /クリア/i });
 			await user.click(clearButtons[0]);
 
-			expect(amountToPayInput).toHaveValue("0");
+			expect(amountToPayInput).toHaveValue("");
 		});
 	});
 
