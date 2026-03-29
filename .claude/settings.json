@@ -25,7 +25,14 @@
       "Bash(git diff *)",
       "Bash(git grep *)",
       "Bash(git branch)",
-      "Bash(git remote)"
+      "Bash(git remote)",
+      "Bash(gh repo view *)",
+      "Bash(gh issue create *)",
+      "Bash(gh issue view *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr edit *)",
+      "Bash(gh pr diff *)",
+      "mcp__plugin_playwright_playwright__*"
     ],
     "deny": [
       "Read(.env*)"
@@ -35,6 +42,7 @@
     "typescript-lsp@claude-plugins-official": true,
     "feature-dev@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
-    "playwright@claude-plugins-official": true
+    "playwright@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true
   }
 }
