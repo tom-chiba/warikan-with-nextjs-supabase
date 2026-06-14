@@ -64,7 +64,7 @@
     "@types/node": "^24.9.1",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.2",
-    "@vitejs/plugin-react": "^5.1.0",
+    "@vitejs/plugin-react": "^5.2.0",
     "dotenv": "^17.2.1",
     "encoding": "^0.1.13",
     "jsdom": "^29.0.1",
@@ -74,7 +74,7 @@
     "shadcn": "^3.7.0",
     "supabase": "^2.84.4",
     "vite-tsconfig-paths": "^6.0.5",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.8"
   },
   "volta": {
     "node": "24.8.0",
