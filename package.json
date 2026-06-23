@@ -72,7 +72,7 @@
     "msw": "^2.11.2",
     "npm-run-all": "^4.1.5",
     "shadcn": "^3.7.0",
-    "supabase": "^2.84.4",
+    "supabase": "^2.107.0",
     "vite-tsconfig-paths": "^6.0.5",
     "vitest": "^3.2.4"
   },
